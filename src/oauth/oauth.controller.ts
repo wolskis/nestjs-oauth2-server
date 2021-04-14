@@ -26,8 +26,7 @@ export class OauthController {
                 allowEmptyState: true,
                 authenticateHandler: {
                     handle: (req) => {
-                        console.log('authenticate handler');
-                        console.log(req.body);
+                        // console.log(req.body);
                         // Whatever you need to do to authorize / retrieve your user from post data here
                         return {id: 1};
                     }
@@ -82,7 +81,7 @@ export class OauthController {
             allowEmptyState: true,
             authenticateHandler: {
                 handle: (req) => {
-                    console.log(req.body);
+                    // console.log(req.body);
                     // Whatever you need to do to authorize / retrieve your user from post data here
                     return {id: 1};
                 }

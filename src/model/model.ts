@@ -116,20 +116,32 @@ export const oauth2Model = {
         })
         return Promise.resolve(!!client);
     },
-    getAuthorizationCode: (clientId, clientSecret): Promise<any> => {
+    getAuthorizationCode: (code): Promise<any> => {
+        // typecast this to code object
         console.log('get auth code');
-        console.log(clientId, clientSecret);
-        const client = data.clients.find(client => client.clientId === clientId);
+        console.log(code);
  
-        return Promise.resolve(client);
+        return Promise.resolve({
+            code: '123',
+            expiresAt: new Date('1649921784'),
+            scope: ['user.read'],
+            redirectUri: ['https://google.com'],
+            client: {
+                ...data.clients[1],
+                id: 1
+            },
+            user: {
+                id: 1
+            }
+        });
     },
-    generateAuthorizationCode: (): Promise<any> => {
-        return Promise.resolve('a0c32560-5243-6ba8-e09e-39603d37f81a')
-    },
+    // generateAuthorizationCode: (): Promise<any> => {
+    //     return Promise.resolve('a0c32560-5243-6ba8-e09e-39603d37f81a')
+    // },
     revokeAuthorizationCode: (code): Promise<boolean> => {
         console.log('revoke auth code');
         console.log(code);
-        return Promise.resolve(true)
+        return Promise.resolve(true);
     },
     saveAuthorizationCode: (code, client, user): Promise<boolean> => {
         // console.log('save auth code');
