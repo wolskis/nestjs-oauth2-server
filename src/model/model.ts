@@ -27,7 +27,8 @@ export const oauth2Model = {
     },
     getClient: (clientId, clientSecret): Promise<any> => {
         console.log(clientId, clientSecret);
-        const client = data.clients.find(client => client.clientId === clientId && client.clientSecret === clientSecret);
+        // const client = data.clients.find(client => client.clientId === clientId && client.clientSecret === clientSecret);
+        const client = data.clients.find(client => client.clientId === clientId);
         console.log(client);
         return Promise.resolve(client);
     },
@@ -106,24 +107,6 @@ export const oauth2Model = {
         // logic to verify scope goes here
         return Promise.resolve(true)
     },
-    getAuthorizationCode: (clientId, clientSecret): Promise<any> => {
-        var clients = data.clients.filter(function(client) {
-            return client.clientId === clientId && client.clientSecret === clientSecret;
-        });
-
-        var confidentialClients = data.clients.filter(function(client) {
-            return client.clientId === clientId && client.clientSecret === clientSecret;
-        });
-
-        return Promise.resolve(clients[0] || confidentialClients[0]);
-    },
-    // generateAuthorizationCode: (): Promise<any> => {
-    //     return Promise.resolve('a0c32560-5243-6ba8-e09e-39603d37f81a')
-    // },
-    revokeAuthorizationCode: (): Promise<boolean> => {
-
-        return Promise.resolve(true)
-    },
     validateClient: async (clientId:string, redirectUri:string, scopes: Array<string>): Promise<boolean> => {
         const client = data.clients.find(client => {
             const c = client.clientId === clientId;
@@ -133,8 +116,24 @@ export const oauth2Model = {
         })
         return Promise.resolve(!!client);
     },
-    saveAuthorizationCode: (): Promise<boolean> => {
-
+    getAuthorizationCode: (clientId, clientSecret): Promise<any> => {
+        console.log('get auth code');
+        console.log(clientId, clientSecret);
+        const client = data.clients.find(client => client.clientId === clientId);
+ 
+        return Promise.resolve(client);
+    },
+    generateAuthorizationCode: (): Promise<any> => {
+        return Promise.resolve('a0c32560-5243-6ba8-e09e-39603d37f81a')
+    },
+    revokeAuthorizationCode: (code): Promise<boolean> => {
+        console.log('revoke auth code');
+        console.log(code);
         return Promise.resolve(true)
+    },
+    saveAuthorizationCode: (code, client, user): Promise<boolean> => {
+        // console.log('save auth code');
+        // console.log(code, client, user);
+        return Promise.resolve(code);
     },
 }

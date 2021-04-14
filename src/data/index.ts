@@ -26,5 +26,6 @@ export const data = {
 	users: [{
 		username: 'pedroetb',
 		password: 'password'
-	}]
+	}],
+    codes: []
 };

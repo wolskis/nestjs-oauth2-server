@@ -21,9 +21,18 @@ export class OauthController {
     accessToken(@Req() req, @Res() res) {
         const request = new OAuth2Server.Request(req);
         const response = new OAuth2Server.Response(res);
-        console.log(request.body);
         if (req.body?.grant_type === "authorization_code") {
-            oauth2Server.authorize(request, response)
+            oauth2Server.authorize(request, response, {
+                allowEmptyState: true,
+                authenticateHandler: {
+                    handle: (req) => {
+                        console.log('authenticate handler');
+                        console.log(req.body);
+                        // Whatever you need to do to authorize / retrieve your user from post data here
+                        return {id: 1};
+                    }
+                }
+            })
                 .then((token: any) => {
                     // need to typecast any above
                     res.status(200).json(token);
@@ -41,27 +50,26 @@ export class OauthController {
     }
  
     @Post('authorize')
-    @Redirect('https://docs.nestjs.com', 302)
     async redirect(@Req() req, @Query() query, @Res() res, ) {
         const request = new OAuth2Server.Request(req);
         const response = new OAuth2Server.Response(res);
         // should include a csrf token
-        // console.log(query);
-        // if (!query || !query.client_id || !query.redirect_uri || !query.scope || !query.response_type) {
-        //     res.status(400).json({
-        //         message: 'Missing required parameter [client_id, redirect_uri, scope, response_type]'
-        //     });
-        //     return
-        // } 
+        console.log(query);
+        if (!query || !query.client_id || !query.redirect_uri || !query.scope || !query.response_type) {
+            res.status(400).json({
+                message: 'Missing required parameter [client_id, redirect_uri, scope, response_type]'
+            });
+            return
+        } 
         
-        // if (query.response_type !== "code"){
-        //     res.status(400).json({ 
-        //         message: "Only 'code' response type supported"
-        //     });
-        //     return
-        // }
+        if (query.response_type !== "code"){
+            res.status(400).json({ 
+                message: "Only 'code' response type supported"
+            });
+            return
+        }
         
-        // // validate client
+        // validate client
         // console.log(await oauth2Model.validateClient(query.client_id, query.redirect_uri, query.scope.split('+')));
         // if (!await oauth2Model.validateClient(query.client_id, query.redirect_uri, query.scope.split('+'))) {
         //     res.status(400).json({
@@ -70,7 +78,16 @@ export class OauthController {
         //     return
         // }
 
-        const foo = await oauth2Server.authorize(request, response, {}, (err?: any, result?: any) => {
+        await oauth2Server.authorize(request, response, {
+            allowEmptyState: true,
+            authenticateHandler: {
+                handle: (req) => {
+                    console.log(req.body);
+                    // Whatever you need to do to authorize / retrieve your user from post data here
+                    return {id: 1};
+                }
+            }
+        }, (err?: any, result?: any) => {
             if (err) {
                 return res.status(400).json(err || {
                     "statusCode": 400,
@@ -80,29 +97,9 @@ export class OauthController {
                     "name": "invalid_client"
                 });
             }
-            console.log('result: ',result)
+            result.expiresAt = Date.parse(result.expiresAt);
+            const queryString = Object.keys(result).map(key => key + '=' + result[key]).join('&');
+            return res.redirect(`${query.redirect_uri}?${queryString}`);
         })
-            // .then((token: any) => {
-            //     console.log(token);
-            //     // need to typecast any above
-            //     res.status(200).json(token);
-            // }).catch((err: any) => {
-            //     //console.log(err);
-            //     res.status(err.code || 500).json(err);
-            // });
-        return {
-            // url: `${query.redirect_uri}?code=${code}&state=${state}`
-            url: `${query.redirect_uri}`
-        }
-        
-
-        // const client = data.clients.find(client => client.clientId === query.client_id);
-        // // store these
-        // const state = Guid.create();
-        // const code = await oauth2Server.generateAuthorizationCode();
-        
-        // return {
-        //     url: `${query.redirect_uri}?code=${code}&state=${state}`
-        // }
     }
 }
