@@ -11,6 +11,7 @@ export const data = {
 	},
     {
 		clientId: 'app2',
+		id: 'app2',
 		clientSecret: 'secret2',
 		grants: [
 			'client_credentials',

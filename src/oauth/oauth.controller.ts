@@ -1,8 +1,7 @@
 import { Controller, Get, Post, Query, Redirect, Req, Res } from '@nestjs/common';
 import * as OAuth2Server from "oauth2-server";
 import { oauth2Model } from "../model/model";
-import { data } from "../data";
-import { Guid } from "guid-typescript";
+const UnsupportedResponseTypeError = require('oauth2-server/lib/errors/unsupported-response-type-error');
 
 const oauth2Server = new OAuth2Server({
     model: oauth2Model,
@@ -21,31 +20,14 @@ export class OauthController {
     accessToken(@Req() req, @Res() res) {
         const request = new OAuth2Server.Request(req);
         const response = new OAuth2Server.Response(res);
-        if (req.body?.grant_type === "authorization_code") {
-            oauth2Server.authorize(request, response, {
-                allowEmptyState: true,
-                authenticateHandler: {
-                    handle: (req) => {
-                        // console.log(req.body);
-                        // Whatever you need to do to authorize / retrieve your user from post data here
-                        return {id: 1};
-                    }
-                }
-            })
-                .then((token: any) => {
-                    // need to typecast any above
-                    res.status(200).json(token);
-                }).catch((err: any) => {
-                    res.status(err.code || 500).json(err);
-                });
-        } else {
-            oauth2Server.token(request, response)
-                .then((token: any) => {
-                    res.status(200).json(token);
-                }).catch((err: any) => {
-                    res.status(err.code || 500).json(err);
-                });
-        }
+        return oauth2Server.token(request, response)
+            .then((token: any) => {
+                res.status(200).json(token);
+            }).catch((err: any) => {
+                console.log(err);
+                res.status(err.code || 500).json(err);
+            });
+
     }
  
     @Post('authorize')
@@ -53,7 +35,6 @@ export class OauthController {
         const request = new OAuth2Server.Request(req);
         const response = new OAuth2Server.Response(res);
         // should include a csrf token
-        console.log(query);
         if (!query || !query.client_id || !query.redirect_uri || !query.scope || !query.response_type) {
             res.status(400).json({
                 message: 'Missing required parameter [client_id, redirect_uri, scope, response_type]'
@@ -69,13 +50,13 @@ export class OauthController {
         }
         
         // validate client
-        // console.log(await oauth2Model.validateClient(query.client_id, query.redirect_uri, query.scope.split('+')));
-        // if (!await oauth2Model.validateClient(query.client_id, query.redirect_uri, query.scope.split('+'))) {
-        //     res.status(400).json({
-        //         message: "Invalid client credentials"
-        //     });
-        //     return
-        // }
+        // the scope validation here is not working yet
+        if (!await oauth2Model.validateClient(query.client_id, query.redirect_uri, query.scope.split('+'))) {
+            res.status(400).json({
+                message: "Invalid client credentials"
+            });
+            return
+        }
 
         await oauth2Server.authorize(request, response, {
             allowEmptyState: true,

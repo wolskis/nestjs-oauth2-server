@@ -1,5 +1,5 @@
 import { data } from "../data"
- 
+const AccessDeniedError = require('oauth2-server/lib/errors/access-denied-error');
 
 /**
  * Dump the memory storage content (for debug).
@@ -8,10 +8,6 @@ import { data } from "../data"
 var dump = function() {
 	console.log(data);
 };
-
-/*
- * Methods used by all grant types.
- */
 
 
 // TODO must typecase promise returns
@@ -26,10 +22,12 @@ export const oauth2Model = {
         return Promise.resolve(tokens[0]);
     },
     getClient: (clientId, clientSecret): Promise<any> => {
-        console.log(clientId, clientSecret);
-        // const client = data.clients.find(client => client.clientId === clientId && client.clientSecret === clientSecret);
-        const client = data.clients.find(client => client.clientId === clientId);
-        console.log(client);
+        let client;
+        if (clientSecret) {
+            client = data.clients.find(client => client.clientId === clientId && client.clientSecret === clientSecret);
+        } else {
+            client = data.clients.find(client => client.clientId === clientId);
+        }
         return Promise.resolve(client);
     },
     saveToken: (token, client, user): Promise<any> => {
@@ -118,33 +116,35 @@ export const oauth2Model = {
     },
     getAuthorizationCode: (code): Promise<any> => {
         // typecast this to code object
-        console.log('get auth code');
-        console.log(code);
- 
+        
+        const storedcode = data.codes.find(x => x.authorizationCode === code);
+        if (!storedcode) {
+            const err = new AccessDeniedError();
+            return Promise.reject(err);
+        }
+        // how to determine client and user here?
+        // saved in DB with auth code?
         return Promise.resolve({
-            code: '123',
-            expiresAt: new Date('1649921784'),
-            scope: ['user.read'],
-            redirectUri: ['https://google.com'],
+            code: storedcode.authorizationCode,
+            expiresAt: new Date(storedcode.expiresAt),
+            scope: storedcode.scope,
+            redirectUri: storedcode.redirectUri,
             client: {
                 ...data.clients[1],
-                id: 1
+                id: data.clients[1].clientId
             },
             user: {
                 id: 1
             }
         });
     },
-    // generateAuthorizationCode: (): Promise<any> => {
-    //     return Promise.resolve('a0c32560-5243-6ba8-e09e-39603d37f81a')
-    // },
     revokeAuthorizationCode: (code): Promise<boolean> => {
-        console.log('revoke auth code');
-        console.log(code);
+        // delete code from DB here
         return Promise.resolve(true);
     },
-    saveAuthorizationCode: (code, client, user): Promise<boolean> => {
-        // console.log('save auth code');
+    saveAuthorizationCode: (code, client, user): Promise<any> => {
+        // save code to DB here instead of mem
+        data.codes.push(code);
         // console.log(code, client, user);
         return Promise.resolve(code);
     },
