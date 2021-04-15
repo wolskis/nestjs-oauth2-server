@@ -15,7 +15,8 @@ export const data = {
 		clientSecret: 'secret2',
 		grants: [
 			'client_credentials',
-            'authorization_code'
+            'authorization_code',
+			'refresh_token'
 		],
 		redirectUris: ['https://google.com'],
         scopes: [

@@ -41,7 +41,6 @@ export const oauth2Model = {
         };
 
         data.tokens.push(token);
-
         return Promise.resolve(token);
     },
 
@@ -77,7 +76,6 @@ export const oauth2Model = {
     */
 
     getRefreshToken: (refreshToken): Promise<any> => {
-
         var tokens = data.tokens.filter(function(savedToken) {
             return savedToken.refreshToken === refreshToken;
         });
