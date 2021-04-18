@@ -9,10 +9,11 @@ import { ClientsService } from './clients/clients.service';
 import { AuthCodesService } from './authcodes/authcodes.service';
 import { DatabaseService } from './database/database.service';
 import { UsersService } from './users/users.service';
+import { TokensService } from './tokens/tokens.service';
 
 @Module({
   controllers: [AppController, OauthController, ApiController],
-  providers: [AppService, ClientsService, AuthCodesService, DatabaseService, UsersService],
+  providers: [AppService, ClientsService, AuthCodesService, DatabaseService, UsersService, TokensService],
   imports: [OauthModule],
 })
 export class AppModule implements NestModule {

@@ -4,6 +4,7 @@ import { Dependencies } from "@nestjs/common";
 import { ClientsService } from "../clients/clients.service";
 import { AuthCodesService } from "../authcodes/authcodes.service";
 import { DatabaseService } from "../database/database.service";
+import { TokensService } from "../tokens/tokens.service";
 import { UsersService } from "../users/users.service";
 const AccessDeniedError = require('oauth2-server/lib/errors/access-denied-error');
 
@@ -18,6 +19,7 @@ export class ModelGenerator implements ModelGeneratorType {
     private clientService = new ClientsService(this.databaseInstance);
     private authcodesService = new AuthCodesService(this.databaseInstance);
     private usersService = new UsersService(this.databaseInstance);
+    private tokensService = new TokensService(this.databaseInstance);
 
     public init() {
         return {
@@ -30,15 +32,13 @@ export class ModelGenerator implements ModelGeneratorType {
             },
             getClient: async (clientId, clientSecret): Promise<Client> => {
                 console.log('getClient')
-                let client: Client;
                 if (clientSecret) {
-                    client = await this.clientService.getClientByIdAndSecret(clientId, clientSecret);
+                    return this.clientService.getClientByIdAndSecret(clientId, clientSecret);
                 } else {
-                    client = await this.clientService.getClientById(clientId);
+                    return this.clientService.getClientById(clientId);
                 }
-                return Promise.resolve(client);
             },
-            saveToken: (token, client, user): Promise<Token> => {
+            saveToken: async (token, client, user): Promise<Token> => {
                 console.log('saveToken')
                 // implement token format here
                 // note: there is a bug in v3.0.1 oauth2-server where tokens are retrieved via client.id instead of client.clientId
@@ -46,7 +46,11 @@ export class ModelGenerator implements ModelGeneratorType {
 
                 token.user = user || null;
 
-                data.tokens.push(token);
+                try {
+                    await this.tokensService.saveToken(token);
+                } catch(e) {
+                    console.log(e)
+                }
                 return Promise.resolve(token);
             },
 
@@ -57,13 +61,7 @@ export class ModelGenerator implements ModelGeneratorType {
 
             getUser: async (username, password): Promise<User> => {
                 console.log('getUser');
-                let user: User;
-                try {
-                    user = await this.usersService.getUserByCredentials(username, password);
-                } catch(e) {
-                    console.log(e)
-                }
-                return Promise.resolve(user);
+                return await this.usersService.getUserByCredentials(username, password);
             },
 
             /*
@@ -73,31 +71,41 @@ export class ModelGenerator implements ModelGeneratorType {
             getUserFromClient: async (client: Client): Promise<User> => {
                 console.log('getUserFromClient')
 
-                let user: User;
-                try {
-                    user = await this.usersService.getUserByClientId(client.clientid);
-                } catch(e) {
-                    console.log(e)
-                }
+                // let user: User;
+                // try {
+                //     user = ;
+                // } catch(e) {
+                //     console.log(e);
+                //     Promise.reject(e);
+                // }
 
-                return Promise.resolve(user);
+                return this.usersService.getUserByClientId(client.clientid);
             },
 
             /*
             * Methods used only by refresh_token grant type.
             */
 
-            getRefreshToken: (refreshToken): Promise<Token> => {
+            getRefreshToken: async (refreshToken): Promise<Token> => {
                 console.log('getRefreshToken');
-                var tokens = data.tokens.filter(function(savedToken) {
-                    return savedToken.refreshToken === refreshToken;
-                });
 
-                if (!tokens.length) {
-                    return;
+                let token: Token;
+                try {
+                    token = await this.tokensService.getTokenByRefresh(refreshToken);
+                } catch(e) {
+                    console.log(e)
                 }
-
-                return Promise.resolve(tokens[0]);
+                console.log(token);
+                const client = await this.clientService.getClientById(token.clientid);
+                const user = await this.usersService.getUserById(token.userid);
+                // clean up redundancy
+                delete token.clientid, token.userid;
+                // use promise.all to optimise this?
+                return Promise.resolve({
+                    ...token,
+                    client,
+                    user
+                });
             },
 
             revokeToken: (token): Promise<boolean> => {
