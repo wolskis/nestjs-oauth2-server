@@ -7,7 +7,8 @@ export const data = {
 			'password',
 			'refresh_token'
 		],
-		redirectUris: []
+		redirectUris: [],
+		scopes:[]
 	},
     {
 		clientId: 'app2',
@@ -26,6 +27,7 @@ export const data = {
 	}],
 	tokens: [],
 	users: [{
+		id: 1,
 		username: 'pedroetb',
 		password: 'password'
 	}],

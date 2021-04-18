@@ -1,4 +1,6 @@
-import { data } from "../data"
+import { data } from "../data";
+// import { User, Token, Client, AuthCode } from "../models";
+import OAuth2Server = require("oauth2-server");
 const AccessDeniedError = require('oauth2-server/lib/errors/access-denied-error');
 
 /**
@@ -13,15 +15,13 @@ var dump = function() {
 // TODO must typecase promise returns
 
 export const oauth2Model = {
-    getAccessToken: async(token): Promise<any> => {
-        
+    getAccessToken: async(token): Promise<OAuth2Server.Token> => {
         var tokens = data.tokens.filter(function(savedToken) {
             return savedToken.accessToken === token;
         });
-        console.log(tokens);
         return Promise.resolve(tokens[0]);
     },
-    getClient: (clientId, clientSecret): Promise<any> => {
+    getClient: (clientId, clientSecret): Promise<OAuth2Server.Client> => {
         let client;
         if (clientSecret) {
             client = data.clients.find(client => client.clientId === clientId && client.clientSecret === clientSecret);
@@ -30,12 +30,10 @@ export const oauth2Model = {
         }
         return Promise.resolve(client);
     },
-    saveToken: (token, client, user): Promise<any> => {
-        console.log(token, client, user);
+    saveToken: (token, client, user): Promise<OAuth2Server.Token> => {
         // implement token format here
-        token.client = {
-            clientId: client.clientId
-        };
+        // note: there is a bug in v3.0.1 oauth2-server where tokens are retrieved via client.id instead of client.clientId
+        token.client = client;
 
         token.user = user || null;
 
@@ -48,7 +46,7 @@ export const oauth2Model = {
     * Method used only by password grant type.
     */
 
-    getUser: (username, password): Promise<any> => {
+    getUser: (username, password): Promise<OAuth2Server.User> => {
 
         var users = data.users.filter(function(user) {
             return user.username === username && user.password === password;
@@ -62,7 +60,7 @@ export const oauth2Model = {
     */
 
     getUserFromClient: (client): Promise<Number> => {
-
+        // still not sure what this is used for, doesn't appear to return a user
         var clients = data.clients.filter(function(savedClient) {
             return savedClient.clientId === client.clientId && savedClient.clientSecret === client.clientSecret;
         });
@@ -74,7 +72,7 @@ export const oauth2Model = {
     * Methods used only by refresh_token grant type.
     */
 
-    getRefreshToken: (refreshToken): Promise<any> => {
+    getRefreshToken: (refreshToken): Promise<OAuth2Server.Token> => {
         var tokens = data.tokens.filter(function(savedToken) {
             return savedToken.refreshToken === refreshToken;
         });
@@ -111,7 +109,7 @@ export const oauth2Model = {
         })
         return Promise.resolve(!!client);
     },
-    getAuthorizationCode: (code): Promise<any> => {
+    getAuthorizationCode: (code): Promise<OAuth2Server.AuthorizationCode> => {
         // typecast this to code object
         
         const storedcode = data.codes.find(x => x.authorizationCode === code);
@@ -122,16 +120,14 @@ export const oauth2Model = {
         // how to determine client and user here?
         // saved in DB with auth code?
         return Promise.resolve({
-            code: storedcode.authorizationCode,
+            authorizationCode: storedcode.authorizationCode,
             expiresAt: new Date(storedcode.expiresAt),
             scope: storedcode.scope,
             redirectUri: storedcode.redirectUri,
-            client: {
-                ...data.clients[1],
-                id: data.clients[1].clientId
-            },
+            client: data.clients[1],
             user: {
-                id: 1
+                id: 1,
+                username: 'foo'
             }
         });
     },
@@ -139,7 +135,7 @@ export const oauth2Model = {
         // delete code from DB here
         return Promise.resolve(true);
     },
-    saveAuthorizationCode: (code, client, user): Promise<any> => {
+    saveAuthorizationCode: (code, client, user): Promise<OAuth2Server.AuthorizationCode> => {
         // save code to DB here instead of mem
         data.codes.push(code);
         // console.log(code, client, user);

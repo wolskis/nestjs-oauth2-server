@@ -10,9 +10,9 @@ export interface Client {
 }
 
 export interface User {
-    id: String;
+    id: Number;
     username: String;
-    password: String;
+    password?: String;
 }
 
 export interface Token {
