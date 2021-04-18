@@ -1,21 +1,23 @@
 import { data } from "../data";
-// import { User, Token, Client, AuthCode } from "../models";
 import { Client, Token, User, AuthorizationCode, ServerOptions } from "oauth2-server";
 import { Dependencies } from "@nestjs/common";
-import { ClientsService } from "../clients/clients.service"
+import { ClientsService } from "../clients/clients.service";
+import { AuthCodesService } from "../authcodes/authcodes.service";
+import { DatabaseService } from "../database/database.service";
+import { UsersService } from "../users/users.service";
 const AccessDeniedError = require('oauth2-server/lib/errors/access-denied-error');
 
 interface ModelGeneratorType {
-    init(): any
+    init(): ServerOptions["model"]
 }
 
 @Dependencies(ClientsService)
 export class ModelGenerator implements ModelGeneratorType {
-    constructor (
-        protected clientService: ClientsService
-    ) {
-        this.clientService = new ClientsService;
-    }
+
+    private databaseInstance = new DatabaseService;
+    private clientService = new ClientsService(this.databaseInstance);
+    private authcodesService = new AuthCodesService(this.databaseInstance);
+    private usersService = new UsersService(this.databaseInstance);
 
     public init() {
         return {
@@ -28,13 +30,12 @@ export class ModelGenerator implements ModelGeneratorType {
             },
             getClient: async (clientId, clientSecret): Promise<Client> => {
                 console.log('getClient')
-                let client;
+                let client: Client;
                 if (clientSecret) {
                     client = await this.clientService.getClientByIdAndSecret(clientId, clientSecret);
                 } else {
                     client = await this.clientService.getClientById(clientId);
                 }
-                console.log('foo');
                 return Promise.resolve(client);
             },
             saveToken: (token, client, user): Promise<Token> => {
@@ -54,27 +55,32 @@ export class ModelGenerator implements ModelGeneratorType {
             * Method used only by password grant type.
             */
 
-            getUser: (username, password): Promise<User> => {
+            getUser: async (username, password): Promise<User> => {
                 console.log('getUser');
-                var users = data.users.filter(function(user) {
-                    return user.username === username && user.password === password;
-                });
-
-                return Promise.resolve(users[0]);
+                let user: User;
+                try {
+                    user = await this.usersService.getUserByCredentials(username, password);
+                } catch(e) {
+                    console.log(e)
+                }
+                return Promise.resolve(user);
             },
 
             /*
             * Method used only by client_credentials grant type.
             */
 
-            getUserFromClient: (client): Promise<Number> => {
+            getUserFromClient: async (client: Client): Promise<User> => {
                 console.log('getUserFromClient')
-                // still not sure what this is used for, doesn't appear to return a user
-                var clients = data.clients.filter(function(savedClient) {
-                    return savedClient.clientId === client.clientId && savedClient.clientSecret === client.clientSecret;
-                });
 
-                return Promise.resolve(clients.length);
+                let user: User;
+                try {
+                    user = await this.usersService.getUserByClientId(client.clientid);
+                } catch(e) {
+                    console.log(e)
+                }
+
+                return Promise.resolve(user);
             },
 
             /*
@@ -113,35 +119,26 @@ export class ModelGenerator implements ModelGeneratorType {
             },
             validateClient: async (clientId:string, redirectUri:string, scopes: Array<string>): Promise<boolean> => {
                 console.log('validateClient');
-                // const client = data.clients.find(client => {
-                //     const c = client.clientId === clientId;
-                //     const r = !!client.redirectUris.find(uri => uri === redirectUri);
-                //     const s = scopes.every(scope => client.scopes?.includes(scope))
-                //     return c && r && s;
-                // })
                 const client = await this.clientService.validateClient(clientId, redirectUri, scopes);
                 return Promise.resolve(!!client);
             },
-            getAuthorizationCode: (code): Promise<AuthorizationCode> => {
+            getAuthorizationCode: async (code): Promise<Partial<AuthorizationCode>> => {
                 console.log('getAuthorizationCode');
-                
-                const storedcode = data.codes.find(x => x.authorizationCode === code);
+                const storedcode = await this.authcodesService.getAuthorizationCode(code);
                 if (!storedcode) {
                     const err = new AccessDeniedError();
                     return Promise.reject(err);
                 }
-                // how to determine client and user here?
-                // saved in DB with auth code?
+                const client = await this.clientService.getClientById(storedcode.clientid);
+                const user = await this.usersService.getUserById(storedcode.userid);
+                
+                // use promise.all to optimise this?
                 return Promise.resolve({
-                    authorizationCode: storedcode.authorizationCode,
                     expiresAt: new Date(storedcode.expiresAt),
                     scope: storedcode.scope,
                     redirectUri: storedcode.redirectUri,
-                    client: data.clients[1],
-                    user: {
-                        id: 1,
-                        username: 'foo'
-                    }
+                    client,
+                    user
                 });
             },
             revokeAuthorizationCode: (code): Promise<boolean> => {
@@ -149,11 +146,12 @@ export class ModelGenerator implements ModelGeneratorType {
                 // delete code from DB here
                 return Promise.resolve(true);
             },
-            saveAuthorizationCode: (code, client, user): Promise<AuthorizationCode> => {
+            saveAuthorizationCode: async (code, client, user): Promise<AuthorizationCode> => {
                 console.log('saveAuthorizationCode');
-                // save code to DB here instead of mem
-                data.codes.push(code);
-                // console.log(code, client, user);
+                const savedCode = await this.authcodesService.saveAuthorizationCode(code, client, user);
+                if (!savedCode) {
+                    return Promise.reject('Could not store authorization code');
+                }
                 return Promise.resolve(code);
             }
         }

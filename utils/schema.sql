@@ -15,7 +15,7 @@ CREATE TABLE clients
   clientId        uuid,
   clientSecret    VARCHAR(255),
   grants          granttypes[],
-  redirectUris   TEXT[],
+  redirectUris    TEXT[],
   scopes          TEXT[],
   created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -27,6 +27,7 @@ CREATE TABLE users
   id              SERIAL,
   username        VARCHAR(255),
   password        TEXT NOT NULL,
+  clients         uuid[],
   created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id)
@@ -61,10 +62,10 @@ CREATE TABLE authcodes
   PRIMARY KEY (id)
 );
 
-INSERT INTO users (username, password)
+INSERT INTO users (username, password, clients)
 VALUES
-  ('joebloggs', 'foo'),
-  ('foobar', 'foo')
+  ('joebloggs', 'foo', ARRAY['b920bbca-aba5-41a0-8f96-18c8e6c8fb39']::uuid[]),
+  ('foobar', 'foo', ARRAY['14e27f24-b935-4f4b-8493-73b8f10f0dab']::uuid[])
 RETURNING *;
 
 INSERT INTO clients (clientId, clientSecret, grants, redirectUris, scopes)
