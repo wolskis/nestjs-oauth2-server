@@ -1,10 +1,13 @@
 import { Controller, Get, Post, Query, Redirect, Req, Res } from '@nestjs/common';
 import * as OAuth2Server from "oauth2-server";
-import { oauth2Model } from "./model";
+import { ModelGenerator } from "./model";
+import { ClientsService } from "../clients/clients.service"
 const UnsupportedResponseTypeError = require('oauth2-server/lib/errors/unsupported-response-type-error');
 
+const model = new ModelGenerator(new ClientsService).init()
+
 const oauth2Server = new OAuth2Server({
-    model: oauth2Model,
+    model,
     accessTokenLifetime: 60 * 60,
 	allowBearerTokensInQueryString: true
 });
@@ -51,7 +54,7 @@ export class OauthController {
         
         // validate client
         // the scope validation here is not working yet
-        if (!await oauth2Model.validateClient(query.client_id, query.redirect_uri, query.scope.split('+'))) {
+        if (!await model.validateClient(query.client_id, query.redirect_uri, query.scope.split('+'))) {
             res.status(400).json({
                 message: "Invalid client credentials"
             });

@@ -1,10 +1,13 @@
 import { NestMiddleware, Injectable } from "@nestjs/common";
 import { Request, Response, NextFunction } from 'express';
 import OAuth2Server = require("oauth2-server");
-import { oauth2Model } from "./oauth/model"
+import { ClientsService } from "./clients/clients.service"
+import { ModelGenerator } from "./oauth/model";
+
+const model = new ModelGenerator(new ClientsService).init()
 
 const oauth2Server = new OAuth2Server({
-    model: oauth2Model
+    model
 });
 
 @Injectable()

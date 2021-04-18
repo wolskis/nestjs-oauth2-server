@@ -18,7 +18,7 @@ From the project root directory, launch postgres container with docker
 Initialise table schema (and seed some data), by copying the schema.sql file into the container and executing it.
 ```
 docker cp ./utils/schema.sql oauth-server:/docker-entrypoint-initdb.d/schema.sql
-docker exec -u postgres names-postgres psql oauth postgres -f /docker-entrypoint-initdb.d/schema.sql
+docker exec -u postgres oauth-server psql oauth postgres -f /docker-entrypoint-initdb.d/schema.sql
 ```
 
 ## Running the app
