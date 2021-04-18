@@ -3,7 +3,6 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { OauthController } from './oauth/oauth.controller';
 import { ApiController } from './api/api.controller';
-import { TokenService } from './token/token.service';
 import { OauthModule } from './oauth/oauth.module';
 import { OAuthMiddleware } from './oauth.middleware'
 import { ClientsService } from './clients/clients.service';
@@ -13,7 +12,7 @@ import { UsersService } from './users/users.service';
 
 @Module({
   controllers: [AppController, OauthController, ApiController],
-  providers: [AppService, TokenService, ClientsService, AuthCodesService, DatabaseService, UsersService],
+  providers: [AppService, ClientsService, AuthCodesService, DatabaseService, UsersService],
   imports: [OauthModule],
 })
 export class AppModule implements NestModule {
