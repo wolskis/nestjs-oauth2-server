@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Query, Redirect, Req, Res } from '@nestjs/common';
 import * as OAuth2Server from "oauth2-server";
-import { oauth2Model } from "../model/model";
+import { oauth2Model } from "./model";
 const UnsupportedResponseTypeError = require('oauth2-server/lib/errors/unsupported-response-type-error');
 
 const oauth2Server = new OAuth2Server({

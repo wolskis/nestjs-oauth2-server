@@ -18,7 +18,7 @@ export const oauth2Model = {
         var tokens = data.tokens.filter(function(savedToken) {
             return savedToken.accessToken === token;
         });
-
+        console.log(tokens);
         return Promise.resolve(tokens[0]);
     },
     getClient: (clientId, clientSecret): Promise<any> => {
@@ -31,14 +31,13 @@ export const oauth2Model = {
         return Promise.resolve(client);
     },
     saveToken: (token, client, user): Promise<any> => {
-
+        console.log(token, client, user);
+        // implement token format here
         token.client = {
-            id: client.clientId
+            clientId: client.clientId
         };
 
-        token.user = {
-            username: user.username
-        };
+        token.user = user || null;
 
         data.tokens.push(token);
         return Promise.resolve(token);
@@ -145,5 +144,5 @@ export const oauth2Model = {
         data.codes.push(code);
         // console.log(code, client, user);
         return Promise.resolve(code);
-    },
+    }
 }
