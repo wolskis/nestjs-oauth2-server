@@ -34,4 +34,14 @@ export class AuthCodesService {
         }
         return null;
     }
+
+    public async deleteAuthorizationCode(code: String): Promise<boolean> {
+        try {    
+            await this.databaseService.query(`DELETE FROM authcodes WHERE code = '${code}'`);
+        } catch(e) {
+            console.log(e);
+            return e;
+        }
+        return true;
+    }
 }

@@ -1,5 +1,4 @@
-import { data } from "../data";
-import { Client, Token, User, AuthorizationCode, ServerOptions } from "oauth2-server";
+import { Client, Token, User, AuthorizationCode, ServerOptions, AuthorizationCodeModel } from "oauth2-server";
 import { Dependencies } from "@nestjs/common";
 import { ClientsService } from "../clients/clients.service";
 import { AuthCodesService } from "../authcodes/authcodes.service";
@@ -23,14 +22,27 @@ export class ModelGenerator implements ModelGeneratorType {
 
     public init() {
         return {
-            getAccessToken: async(token): Promise<Token> => {
+            getAccessToken: async(token: string): Promise<Token> => {
                 console.log('getAccessToken');
-                var tokens = data.tokens.filter(function(savedToken) {
-                    return savedToken.accessToken === token;
+                const retrievedToken = await this.tokensService.getTokenByToken(token);
+                const client = await this.clientService.getClientById(retrievedToken.clientid);
+                const user = await this.usersService.getUserById(retrievedToken.userid);
+                // clean up redundancy
+                delete retrievedToken.clientid, retrievedToken.userid;
+                // use promise.all to optimise this?
+                return Promise.resolve({
+                    ...retrievedToken,
+                    id: retrievedToken.id,
+                    accessToken: retrievedToken.accesstoken,
+                    accessTokenExpiresAt: retrievedToken.accesstokenexpiresat,
+                    refreshToken: retrievedToken.refreshtoken,
+                    refreshTokenExpiresAt: retrievedToken.retrievedtokenexpiresat,
+                    scope: retrievedToken.scope,
+                    client,
+                    user
                 });
-                return Promise.resolve(tokens[0]);
             },
-            getClient: async (clientId, clientSecret): Promise<Client> => {
+            getClient: async (clientId: string, clientSecret: string): Promise<Client> => {
                 console.log('getClient')
                 if (clientSecret) {
                     return this.clientService.getClientByIdAndSecret(clientId, clientSecret);
@@ -38,7 +50,7 @@ export class ModelGenerator implements ModelGeneratorType {
                     return this.clientService.getClientById(clientId);
                 }
             },
-            saveToken: async (token, client, user): Promise<Token> => {
+            saveToken: async (token: Token, client: Client, user: User): Promise<Token> => {
                 console.log('saveToken')
                 // implement token format here
                 // note: there is a bug in v3.0.1 oauth2-server where tokens are retrieved via client.id instead of client.clientId
@@ -59,7 +71,7 @@ export class ModelGenerator implements ModelGeneratorType {
             * Method used only by password grant type.
             */
 
-            getUser: async (username, password): Promise<User> => {
+            getUser: async (username: string, password: string): Promise<User> => {
                 console.log('getUser');
                 return await this.usersService.getUserByCredentials(username, password);
             },
@@ -70,15 +82,6 @@ export class ModelGenerator implements ModelGeneratorType {
 
             getUserFromClient: async (client: Client): Promise<User> => {
                 console.log('getUserFromClient')
-
-                // let user: User;
-                // try {
-                //     user = ;
-                // } catch(e) {
-                //     console.log(e);
-                //     Promise.reject(e);
-                // }
-
                 return this.usersService.getUserByClientId(client.clientid);
             },
 
@@ -86,16 +89,14 @@ export class ModelGenerator implements ModelGeneratorType {
             * Methods used only by refresh_token grant type.
             */
 
-            getRefreshToken: async (refreshToken): Promise<Token> => {
+            getRefreshToken: async (refreshToken: string): Promise<Token> => {
                 console.log('getRefreshToken');
-
-                let token: Token;
-                try {
-                    token = await this.tokensService.getTokenByRefresh(refreshToken);
-                } catch(e) {
-                    console.log(e)
+                const token: Token = await this.tokensService.getTokenByRefresh(refreshToken);
+                if (!token) {
+                    const err = new AccessDeniedError();
+                    err.message = 'Invalid refresh token';
+                    return Promise.reject(err);
                 }
-                console.log(token);
                 const client = await this.clientService.getClientById(token.clientid);
                 const user = await this.usersService.getUserById(token.userid);
                 // clean up redundancy
@@ -108,19 +109,12 @@ export class ModelGenerator implements ModelGeneratorType {
                 });
             },
 
-            revokeToken: (token): Promise<boolean> => {
+            revokeToken: (token: Token): Promise<boolean> => {
                 console.log('revokeToken');
-                data.tokens = data.tokens.filter(function(savedToken) {
-                    return savedToken.refreshToken !== token.refreshToken;
-                });
-
-                var revokedTokensFound = data.tokens.filter(function(savedToken) {
-                    return savedToken.refreshToken === token.refreshToken;
-                });
-
-                return Promise.resolve(!revokedTokensFound.length);
+                console.log(token);
+                return this.tokensService.deleteTokenByToken(token.accesstoken);
             },
-            verifyScope: (token): Promise<boolean> => {
+            verifyScope: (token: Token): Promise<boolean> => {
                 console.log('verifyScope');
                 // logic to verify scope goes here
                 return Promise.resolve(true)
@@ -130,31 +124,31 @@ export class ModelGenerator implements ModelGeneratorType {
                 const client = await this.clientService.validateClient(clientId, redirectUri, scopes);
                 return Promise.resolve(!!client);
             },
-            getAuthorizationCode: async (code): Promise<Partial<AuthorizationCode>> => {
+            getAuthorizationCode: async (code: string): Promise<Partial<AuthorizationCode>> => {
                 console.log('getAuthorizationCode');
                 const storedcode = await this.authcodesService.getAuthorizationCode(code);
                 if (!storedcode) {
                     const err = new AccessDeniedError();
+                    err.message = 'Invalid authorization code';
                     return Promise.reject(err);
                 }
                 const client = await this.clientService.getClientById(storedcode.clientid);
                 const user = await this.usersService.getUserById(storedcode.userid);
-                
                 // use promise.all to optimise this?
                 return Promise.resolve({
-                    expiresAt: new Date(storedcode.expiresAt),
+                    code: storedcode.code,
+                    expiresAt: storedcode.expiresat,
                     scope: storedcode.scope,
-                    redirectUri: storedcode.redirectUri,
+                    redirectUri: storedcode.redirecturi,
                     client,
                     user
                 });
             },
-            revokeAuthorizationCode: (code): Promise<boolean> => {
+            revokeAuthorizationCode: (code: AuthorizationCode): Promise<boolean> => {
                 console.log('revokeAuthorizationCode');
-                // delete code from DB here
-                return Promise.resolve(true);
+                return this.authcodesService.deleteAuthorizationCode(code.code);
             },
-            saveAuthorizationCode: async (code, client, user): Promise<AuthorizationCode> => {
+            saveAuthorizationCode: async (code: AuthorizationCode, client: Client, user: User): Promise<AuthorizationCode> => {
                 console.log('saveAuthorizationCode');
                 const savedCode = await this.authcodesService.saveAuthorizationCode(code, client, user);
                 if (!savedCode) {

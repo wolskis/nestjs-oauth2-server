@@ -10,19 +10,42 @@ export class TokensService {
     ) {}
     
     public async getTokenByRefresh(refreshToken: String): Promise<Token> {
-        console.log(`SELECT * FROM tokens WHERE refreshToken = '${refreshToken}'`);
         const { rows } = await this.databaseService.query(`SELECT * FROM tokens WHERE refreshToken = '${refreshToken}'`);
-        console.log(rows);
         if (rows.length === 1){
             return rows[0] as Token;
         }
         return null;
     }
 
-    public async saveToken(token: Token): Promise<Boolean> {
-        // console.log(`SELECT * FROM tokens WHERE refreshToken = '${refreshToken}'`);
-        // const { rows } = await this.databaseService.query(`SELECT * FROM tokens WHERE refreshToken = '${refreshToken}'`);
-        console.log(token);
+    public async getTokenByToken(token: string): Promise<Token> {
+        const { rows } = await this.databaseService.query(`SELECT * FROM tokens WHERE accessToken = '${token}'`);
+        if (rows.length === 1){
+            return rows[0] as Token;
+        }
+        return null;
+    }
+
+    public async deleteTokenByRefresh(refreshToken: String): Promise<boolean> {
+        try {    
+            await this.databaseService.query(`DELETE FROM tokens WHERE refreshToken = '${refreshToken}'`);
+        } catch(e) {
+            console.log(e);
+            return e;
+        }
+        return true;
+    }
+
+    public async deleteTokenByToken(token: string): Promise<boolean> {
+        try {    
+            await this.databaseService.query(`DELETE FROM tokens WHERE accessToken = '${token}'`);
+        } catch(e) {
+            console.log(e);
+            return e;
+        }
+        return true;
+    }
+
+    public async saveToken(token: Token): Promise<boolean> {
         try {
             await this.databaseService.query(
                 'INSERT INTO tokens (accessToken, accessTokenExpiresAt, refreshToken, refreshTokenExpiresAt, scope, clientId, userId) VALUES ($1, $2, $3, $4, $5, $6, $7)',
