@@ -6,6 +6,7 @@ import { DatabaseService } from "../database/database.service";
 import { TokensService } from "../tokens/tokens.service";
 import { UsersService } from "../users/users.service";
 const AccessDeniedError = require('oauth2-server/lib/errors/access-denied-error');
+const InvalidTokenError = require('oauth2-server/lib/errors/invalid-token-error');
 
 interface ModelGeneratorType {
     init(): ServerOptions["model"]
@@ -25,18 +26,20 @@ export class ModelGenerator implements ModelGeneratorType {
             getAccessToken: async(token: string): Promise<Token> => {
                 console.log('getAccessToken');
                 const retrievedToken = await this.tokensService.getTokenByToken(token);
+                if (!retrievedToken) {
+                    const err = new InvalidTokenError();
+                    err.message = 'Invalid access token';
+                    return Promise.reject(err);
+                }
                 const client = await this.clientService.getClientById(retrievedToken.clientid);
                 const user = await this.usersService.getUserById(retrievedToken.userid);
-                // clean up redundancy
-                delete retrievedToken.clientid, retrievedToken.userid;
                 // use promise.all to optimise this?
                 return Promise.resolve({
-                    ...retrievedToken,
                     id: retrievedToken.id,
                     accessToken: retrievedToken.accesstoken,
                     accessTokenExpiresAt: retrievedToken.accesstokenexpiresat,
                     refreshToken: retrievedToken.refreshtoken,
-                    refreshTokenExpiresAt: retrievedToken.retrievedtokenexpiresat,
+                    refreshTokenExpiresAt: retrievedToken.refreshtokenexpiresat,
                     scope: retrievedToken.scope,
                     client,
                     user
@@ -74,7 +77,7 @@ export class ModelGenerator implements ModelGeneratorType {
                 console.log('getRefreshToken');
                 const token: Token = await this.tokensService.getTokenByRefresh(refreshToken);
                 if (!token) {
-                    const err = new AccessDeniedError();
+                    const err = new InvalidTokenError();
                     err.message = 'Invalid refresh token';
                     return Promise.reject(err);
                 }
@@ -134,13 +137,16 @@ export class ModelGenerator implements ModelGeneratorType {
                 const client = await this.clientService.validateClient(clientId, redirectUri, scopes);
                 return Promise.resolve(!!client);
             },
-            validateScope: (token: Token): Promise<boolean> => {
-                console.log('verifyScope');
+            validateScope: (user:User, client: Client, scope: string): Promise<boolean> => {
+                console.log('validateScope');
+
                 // logic to verify scope goes here
                 return Promise.resolve(true)
             },
-            verifyScope: (token: Token): Promise<boolean> => {
+            verifyScope: (token: Token, scope: string): Promise<boolean> => {
                 console.log('verifyScope');
+                console.log(token)
+                console.log(scope);
                 // logic to verify scope goes here
                 return Promise.resolve(true)
             }

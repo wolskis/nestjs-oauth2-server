@@ -1,9 +1,19 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Scope } from 'src/scope.decorator';
+import { ScopeGuard } from 'src/scope.guard';
 
 @Controller('api')
+@UseGuards(ScopeGuard)
 export class ApiController {
     @Get()
-    findAll(): string {
-      return 'This is the secret area';
+    @Scope('user.read')
+    find(): string {
+      return 'This is the user.read area';
+    }
+
+    @Post()
+    @Scope('user.write')
+    add(): string {
+      return 'This is the user.write area';
     }
 }

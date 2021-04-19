@@ -39,7 +39,7 @@ CREATE TABLE tokens
   accessToken           text,
   accessTokenExpiresAt  TIMESTAMPTZ NOT NULL,
   refreshToken          text,
-  refreshTokenExpiresAt TIMESTAMPTZ NOT NULL,
+  refreshTokenExpiresAt TIMESTAMPTZ,
   scope                 text,
   clientId    uuid,
   userId      integer,
