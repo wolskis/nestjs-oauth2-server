@@ -1,10 +1,10 @@
 import { Client, Token, User, AuthorizationCode, ServerOptions, AuthorizationCodeModel } from "oauth2-server";
 import { Dependencies } from "@nestjs/common";
-import { ClientsService } from "../clients/clients.service";
-import { AuthCodesService } from "../authcodes/authcodes.service";
-import { DatabaseService } from "../database/database.service";
-import { TokensService } from "../tokens/tokens.service";
-import { UsersService } from "../users/users.service";
+import { ClientsService } from "../services/clients/clients.service";
+import { AuthCodesService } from "../services/authcodes/authcodes.service";
+import { DatabaseService } from "../services/database/database.service";
+import { TokensService } from "../services/tokens/tokens.service";
+import { UsersService } from "../services/users/users.service";
 const AccessDeniedError = require('oauth2-server/lib/errors/access-denied-error');
 const InvalidTokenError = require('oauth2-server/lib/errors/invalid-token-error');
 

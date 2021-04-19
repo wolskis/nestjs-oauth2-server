@@ -6,11 +6,11 @@ import { OauthController } from './oauth/oauth.controller';
 import { ApiController } from './api/api.controller';
 import { OauthModule } from './oauth/oauth.module';
 import { OAuthMiddleware } from './oauth.middleware'
-import { ClientsService } from './clients/clients.service';
-import { AuthCodesService } from './authcodes/authcodes.service';
-import { DatabaseService } from './database/database.service';
-import { UsersService } from './users/users.service';
-import { TokensService } from './tokens/tokens.service';
+import { ClientsService } from './services/clients/clients.service';
+import { AuthCodesService } from './services/authcodes/authcodes.service';
+import { DatabaseService } from './services/database/database.service';
+import { UsersService } from './services/users/users.service';
+import { TokensService } from './services/tokens/tokens.service';
 
 @Module({
   controllers: [AppController, OauthController, ApiController],
