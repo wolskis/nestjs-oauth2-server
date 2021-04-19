@@ -10,11 +10,11 @@ export class DatabaseService {
     public async query(q: string, v?: Array<any>): Promise<Response> {
         // TODO: swap this for env vars
         const pool = await new Pool({
-          user: 'postgres',
-          host: '127.0.0.1',
-          database: 'oauth',
-          password: 'password',
-          port: 5432,
+          user: process.env.DB_USER || 'postgres',
+          host: process.env.DB_HOST || '127.0.0.1',
+          database: process.env.DB_NAME || 'oauth',
+          password: process.env.DB_PASSWORD || 'password',
+          port: parseInt(process.env.DB_PORT, 10) || 5432
         })
         const client = await pool.connect()
         let res

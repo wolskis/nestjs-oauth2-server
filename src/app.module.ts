@@ -1,4 +1,5 @@
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { OauthController } from './oauth/oauth.controller';
@@ -14,7 +15,7 @@ import { TokensService } from './tokens/tokens.service';
 @Module({
   controllers: [AppController, OauthController, ApiController],
   providers: [AppService, ClientsService, AuthCodesService, DatabaseService, UsersService, TokensService],
-  imports: [OauthModule],
+  imports: [OauthModule, ConfigModule.forRoot()],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
