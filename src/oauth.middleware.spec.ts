@@ -1,7 +1,7 @@
-import { OauthMiddleware } from './oauth.middleware';
+import { OAuthMiddleware } from './oauth.middleware';
 
 describe('OauthMiddleware', () => {
   it('should be defined', () => {
-    expect(new OauthMiddleware()).toBeDefined();
+    expect(new OAuthMiddleware()).toBeDefined();
   });
 });

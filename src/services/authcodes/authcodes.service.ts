@@ -14,7 +14,7 @@ export class AuthCodesService {
         return code;
     }
 
-    public async saveAuthorizationCode(code: AuthorizationCode, client:Client, user:User): Promise<boolean> {   
+    public async saveAuthorizationCode(code: AuthorizationCode, client:Client, user:User): Promise<boolean> {  
         try {
             await this.databaseService.query(
                 'INSERT INTO authcodes (code, expiresAt, scope, redirectUri, clientId, userId) VALUES ($1, $2, $3, $4, $5, $6)',

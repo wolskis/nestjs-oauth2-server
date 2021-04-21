@@ -1,6 +1,6 @@
 import { Controller, Get, Post, UseGuards } from '@nestjs/common';
-import { Scope } from 'src/scope.decorator';
-import { ScopeGuard } from 'src/scope.guard';
+import { Scope } from '../scope.decorator';
+import { ScopeGuard } from '../scope.guard';
 
 @Controller('api')
 @UseGuards(ScopeGuard)
