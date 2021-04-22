@@ -5,7 +5,7 @@ export const client: Client = {
     clientid: '14e27f24-b935-4f4b-8493-73b8f10f0dab',
     grants: [ 'client_credentials', 'authorization_code', 'refresh_token' ],
     scopes: [ 'user.read', 'user.write' ],
-    redirectUris: [ 'https://google.com' ]
+    redirecturis: [ 'https://google.com' ]
 }
 export const user: User = { id: 1 }
 

@@ -1,39 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthCodesService } from './authcodes.service';
 import { DatabaseService } from '../database/database.service';
-import { Client as DBClient } from 'pg';
 import { authcode, client as clientmock, user, dbAuthCode } from '../../mocks'
-
-// TODO: make this importable/shareable
-// is currently hoisted, so cannot be imported
-jest.mock('pg', () => {
-  const mClient = {
-    query: jest.fn(),
-    end: jest.fn(),
-    release: jest.fn()
-  }
-  const mPool = {
-    connect: jest.fn(() => mClient),
-    query: jest.fn(),
-    end: jest.fn(),
-    release: jest.fn()
-  };
-  return { 
-    Pool: jest.fn(() => mPool),
-    Client: jest.fn(() => mClient)
-  };
-});
+import { MockedDatabaseService } from '../database/__mocks__/database.service';
 
 describe('AuthCodesService', () => {
   let service: AuthCodesService;
-  let client: any;
+  let repositoryMock: any;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AuthCodesService,DatabaseService]
+      providers: [
+        AuthCodesService,
+        { provide: 'DatabaseService', useClass: MockedDatabaseService }
+      ]
     }).compile();
 
-    client = new DBClient();
+    repositoryMock = module.get<DatabaseService>(DatabaseService);
     service = module.get<AuthCodesService>(AuthCodesService);
   });
 
@@ -47,28 +30,28 @@ describe('AuthCodesService', () => {
   });
 
   it('should save auth codes to db', async (done) => {
-    client.query.mockResolvedValueOnce({ rows: [] });
+    repositoryMock.query.mockResolvedValueOnce({ rows: [] });
     const test = await service.saveAuthorizationCode(authcode, clientmock, user)
     expect(test).toBe(true);
     done();
   });
 
   it('should get auth codes from db', async (done) => {
-    client.query.mockResolvedValueOnce({ rows: [dbAuthCode] });
+    repositoryMock.query.mockResolvedValueOnce({ rows: [dbAuthCode] });
     const test = await service.getAuthorizationCode('d9524def3dfdd46fa6cac54b8b64d0088ff21013');
     expect(test).toBe(dbAuthCode);
     done();
   });
 
   it('should handle errors if auth code cannot be found', async (done) => {
-    client.query.mockResolvedValueOnce({ rows: [] });
+    repositoryMock.query.mockResolvedValueOnce({ rows: [] });
     const test = await service.getAuthorizationCode('d9524def3dfdd46fa6cac54b8b64d0088ff21013');
     expect(test).toBe(null);
     done();
   });
 
   it('should delete auth codes from db', async (done) => {
-    client.query.mockResolvedValueOnce({ rows: [] });
+    repositoryMock.query.mockResolvedValueOnce({ rows: [] });
     const test = await service.deleteAuthorizationCode('d9524def3dfdd46fa6cac54b8b64d0088ff21013');
     expect(test).toBe(true);
     done();

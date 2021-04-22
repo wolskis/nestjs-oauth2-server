@@ -11,8 +11,10 @@ export class ClientsService {
 
     private cleanClient(client: Client) {
         // limitations of postgres case sensitivity
-        client.redirectUris = client.redirecturis;
-        delete client.redirecturis;
+        if (!client.redirectUris && !!client.redirecturis){
+            client.redirectUris = client.redirecturis;
+            delete client.redirecturis;
+        }
 
         // surely theres a better way to handle enum arrays?
         if (typeof client.grants === "string") {
@@ -37,17 +39,16 @@ export class ClientsService {
         return null;
     }
 
-    public async validateClient(clientId: String, redirectUri: String, scopes: Array<String>): Promise<Client> {
+    public async validateClient(clientId: String, redirectUri: string, scopes: Array<String>): Promise<Client> {
         const { rows } = await this.databaseService.query(`SELECT id, clientid, grants, scopes, redirecturis FROM clients WHERE clientId = '${clientId}'`);
         if (rows.length === 1){
-            const client = rows[0];
-
-            if(!client.redirecturis.includes(redirectUri) || !scopes.every(scope => client.scopes?.includes(scope))) {
+            const client = this.cleanClient(rows[0]) as Client;
+            if(client.redirectUris.length <= 0 || !client.redirectUris.includes(redirectUri) || !scopes.every(scope => client.scopes?.includes(scope))) {
                 // todo: return an appropriate error here
                 return null;
             }
 
-            return this.cleanClient(rows[0]) as Client;
+            return client;
         }
         return null;
     }

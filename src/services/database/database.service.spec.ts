@@ -2,8 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DatabaseService } from './database.service';
 import { Client } from 'pg';
 
-// TODO: make this importable/shareable
-// is currently hoisted, so cannot be imported
 jest.mock('pg', () => {
   const mClient = {
     query: jest.fn(),

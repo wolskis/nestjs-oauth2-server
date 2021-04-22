@@ -17,7 +17,6 @@ export class OAuthMiddleware implements NestMiddleware {
         const response = new OAuth2Server.Response(res);
         try {
             const token = await oauth2Server.authenticate(request, response, options);
-            console.log(options);
             (req as any).user = token;
             next();
         } catch (err) {
