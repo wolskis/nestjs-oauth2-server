@@ -11,6 +11,9 @@ import { token } from '../src/mocks'
 describe('AppController (e2e)', () => {
   let app: INestApplication;
   let authCode: string;
+  let refreshToken: string;
+  let accessToken1: string;
+  let accessToken2: string;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -20,13 +23,6 @@ describe('AppController (e2e)', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
   });
-
-  // it('/ (GET)', () => {
-  //   return request(app.getHttpServer())
-  //     .get('/')
-  //     .expect(200)
-  //     .expect('Hello World!');
-  // });
 
   it('/auth/token client_credentials', (done) => {
     return request(app.getHttpServer())
@@ -80,6 +76,26 @@ describe('AppController (e2e)', () => {
       .expect(200)
       .then(res => {
         assert.ok(Object.keys(res.body).every(k => Object.keys(token).includes(k)));
+        // set this token to use in following test
+        refreshToken = res.body.refreshToken;
+        accessToken1 = res.body.accessToken;
+        done();
+      });
+  });
+
+  it('/auth/token', (done) => {
+    return request(app.getHttpServer())
+      .post('/oauth/token')
+      .send({
+        "grant_type":"refresh_token",
+        "refresh_token":refreshToken,
+      })
+      .set('Authorization', 'Basic MTRlMjdmMjQtYjkzNS00ZjRiLTg0OTMtNzNiOGYxMGYwZGFiOnNlY3JldDI=')
+      .set('Content-Type', 'application/x-www-form-urlencoded')
+      .expect(200)
+      .then(res => {
+        assert.ok(Object.keys(res.body).every(k => Object.keys(token).includes(k)));
+        accessToken2 = res.body.accessToken;
         done();
       });
   });
@@ -100,4 +116,31 @@ describe('AppController (e2e)', () => {
         done();
       });
   });
+
+  it('Protects secured endpoints', () => {
+    return request(app.getHttpServer())
+      .get('/api')
+      .expect(401)
+  });
+
+  it('Ensures that tokens are invalided if a new one is issued', () => {
+    return request(app.getHttpServer())
+      .get('/api')
+      .set('Authorization', `Bearer ${accessToken1}`)
+      .expect(401)
+  });
+
+  it('Authenticates secured endpoints', () => {
+    return request(app.getHttpServer())
+      .get('/api')
+      .set('Authorization', `Bearer ${accessToken2}`)
+      .expect(200)
+  });
+
+  // it('Authenticates secured endpoints with scope verification', () => {
+  //   return request(app.getHttpServer())
+  //     .post('/api')
+  //     .set('Authorization', `Bearer ${accessToken2}`)
+  //     .expect(403)
+  // });
 });

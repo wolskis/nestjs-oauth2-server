@@ -70,7 +70,8 @@ export class ModelGenerator implements ModelGeneratorType {
                 if (clientSecret) {
                     return this.clientService.getClientByIdAndSecret(clientId, clientSecret);
                 } else {
-                    return this.clientService.getClientById(clientId);
+                    const client = await this.clientService.getClientById(clientId)
+                    return client;
                 }
             },
             getRefreshToken: async (refreshToken: string): Promise<Token> => {
@@ -133,14 +134,32 @@ export class ModelGenerator implements ModelGeneratorType {
             },
             validateClient: async (clientId:string, redirectUri:string, scopes: Array<string>): Promise<boolean> => {
                 console.log('validateClient');
-                const client = await this.clientService.validateClient(clientId, redirectUri, scopes);
+                // there's a bug in oauth2-server where scopes is returned here as an array of 1 string
+                const client = await this.clientService.validateClient(clientId, redirectUri, scopes[0].split(' '));
                 return Promise.resolve(!!client);
             },
-            validateScope: (user:User, client: Client, scope: string): Promise<boolean> => {
+            validateScope: async (user:User, client: Client, scope: Array<string>|string): Promise<Array<string>> => {
                 console.log('validateScope');
+                // oauth2-server handles this totally inconsistently
+                // password/client_creds flows, scope is undefined
+                // authorize flows, scope is an array of strings
+                // authorization_code flow, scope is a string
+
+                let s: Array<string>;
+                
+                if (typeof scope === 'string') {
+                    // if scope is a string, convert to array and compare against values on client registration
+                    s = scope.split(' ').every(scope => client.scopes.includes(scope)) ? scope.split(' ') : undefined;
+                } else if (Array.isArray(scope)) {
+                    // if scope is array, compare against values on client registration
+                    s = scope.every(scope => client.scopes.includes(scope)) ? scope : undefined;
+                } else {
+                    // if scope is undefined, return all client scopes
+                    s = client.scopes;
+                }
 
                 // logic to verify scope goes here
-                return Promise.resolve(true)
+                return Promise.resolve(s);
             },
             verifyScope: (token: Token, scope: string): Promise<boolean> => {
                 console.log('verifyScope');

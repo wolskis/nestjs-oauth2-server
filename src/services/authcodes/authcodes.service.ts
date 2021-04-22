@@ -10,7 +10,10 @@ export class AuthCodesService {
     ) {}
 
     private cleanAuthCode(code: AuthorizationCode) {
-        // console.log(code);
+        // surely theres a better way to handle arrays?
+        if (typeof code.scope === "string") {
+            code.scope = code.scope.replace(/[{}"]/g, "").split(',');
+        }
         return code;
     }
 

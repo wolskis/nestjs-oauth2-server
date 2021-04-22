@@ -9,10 +9,12 @@ export class ScopeGuard implements CanActivate {
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
-    const scope = this.reflector.get<string[]>('scope', context.getHandler());
+    const requestScope = this.reflector.get<string[]>('scope', context.getHandler());
     const request = context.switchToHttp().getRequest();
-    if (scope) {
-      if (!request.user?.client?.scopes || !scope.every(scope => request.user?.client?.scopes.includes(scope))) {
+    const tokenScopes = request.user.scope;
+
+    if (tokenScopes) {
+      if (!requestScope.every(s =>  tokenScopes.includes(s))) {
         return false
       } 
     }

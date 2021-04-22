@@ -70,6 +70,6 @@ RETURNING *;
 
 INSERT INTO clients (clientId, clientSecret, grants, redirectUris, scopes)
 VALUES
-  ('b920bbca-aba5-41a0-8f96-18c8e6c8fb39','secret1', ARRAY['password']::granttypes[], null, null),
+  ('b920bbca-aba5-41a0-8f96-18c8e6c8fb39','secret1', ARRAY['password']::granttypes[], null, ARRAY['user.read']),
   ('14e27f24-b935-4f4b-8493-73b8f10f0dab','secret2', ARRAY['client_credentials', 'authorization_code', 'refresh_token']::granttypes[], ARRAY['https://google.com'], ARRAY['user.read', 'user.write'])
 RETURNING *;

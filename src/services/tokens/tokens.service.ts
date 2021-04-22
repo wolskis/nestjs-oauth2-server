@@ -8,11 +8,19 @@ export class TokensService {
         @Inject(forwardRef(() => DatabaseService))
         private databaseService: DatabaseService,
     ) {}
+
+    private cleanToken(token: Token) {
+        // surely theres a better way to handle enum arrays?
+        if (typeof token.scope === "string") {
+            token.scope = token.scope.replace(/[{}"]/g, "").split(',');
+        }
+        return token;
+    }
     
     public async getTokenByRefresh(refreshToken: String): Promise<Token> {
         const { rows } = await this.databaseService.query(`SELECT * FROM tokens WHERE refreshToken = '${refreshToken}'`);
         if (rows.length === 1){
-            return rows[0] as Token;
+            return this.cleanToken(rows[0]) as Token;
         }
         return null;
     }
@@ -20,7 +28,7 @@ export class TokensService {
     public async getTokenByToken(token: string): Promise<Token> {
         const { rows } = await this.databaseService.query(`SELECT * FROM tokens WHERE accessToken = '${token}'`);
         if (rows.length === 1){
-            return rows[0] as Token;
+            return this.cleanToken(rows[0]) as Token;
         }
         return null;
     }
