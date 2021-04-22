@@ -1,4 +1,4 @@
-import { authcode, client, user, dbAuthCode } from './models';
+import { authcode, client, user, dbAuthCode, token } from './models';
 
 
-export { authcode, client, user, dbAuthCode }
+export { authcode, client, user, dbAuthCode, token }

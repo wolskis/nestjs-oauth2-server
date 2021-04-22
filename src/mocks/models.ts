@@ -7,7 +7,7 @@ export const client: Client = {
     scopes: [ 'user.read', 'user.write' ],
     redirecturis: [ 'https://google.com' ]
 }
-export const user: User = { id: 1 }
+export const user: User = { id: 1, username: 'joebloggs' }
 
 export const authcode: AuthorizationCode = {
     authorizationCode: '70b092d9e1bf25eb20727212a8149ce67017e80b',
@@ -28,4 +28,15 @@ export const dbAuthCode = {
     userid: 1
 }
 
-export default { authcode, client, user, dbAuthCode }
+export const token = {
+    accessToken: '0adab8058775373c32d84a4a7faceb6bca104a0e',
+    authorizationCode: undefined,
+    accessTokenExpiresAt: new Date('2021-04-22T07:33:38.875Z'),
+    refreshToken: '2dcd1cc8e88468ee7f55d739be2aba4aaf4f735e',
+    refreshTokenExpiresAt: new Date('2021-05-06T06:33:38.875Z'),
+    scope: [ 'user.read', 'user.write' ],
+    client,
+    user
+}
+
+export default { authcode, client, user, dbAuthCode, token }

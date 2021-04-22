@@ -65,7 +65,7 @@ export class ModelGenerator implements ModelGeneratorType {
                     user
                 });
             },
-            getClient: async (clientId: string, clientSecret: string): Promise<Client> => {
+            getClient: async (clientId: string, clientSecret?: string): Promise<Client> => {
                 console.log('getClient')
                 if (clientSecret) {
                     return this.clientService.getClientByIdAndSecret(clientId, clientSecret);
@@ -106,7 +106,6 @@ export class ModelGenerator implements ModelGeneratorType {
             },
             revokeToken: (token: Token): Promise<boolean> => {
                 console.log('revokeToken');
-                console.log(token);
                 return this.tokensService.deleteTokenByToken(token.accesstoken);
             },
             saveAuthorizationCode: async (code: AuthorizationCode, client: Client, user: User): Promise<AuthorizationCode> => {
@@ -145,8 +144,6 @@ export class ModelGenerator implements ModelGeneratorType {
             },
             verifyScope: (token: Token, scope: string): Promise<boolean> => {
                 console.log('verifyScope');
-                console.log(token)
-                console.log(scope);
                 // logic to verify scope goes here
                 return Promise.resolve(true)
             }
