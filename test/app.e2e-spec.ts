@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+const assert = require('assert');
 const queryString = require('query-string');
 import * as request from 'supertest';
 import { AppModule } from './../src/app.module';
@@ -20,31 +21,34 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
-  });
+  // it('/ (GET)', () => {
+  //   return request(app.getHttpServer())
+  //     .get('/')
+  //     .expect(200)
+  //     .expect('Hello World!');
+  // });
 
-  it('/auth/token client_credentials', () => {
+  it('/auth/token client_credentials', (done) => {
     return request(app.getHttpServer())
       .post('/oauth/token')
       .send({"grant_type": "client_credentials"})
       .set('Authorization', 'Basic MTRlMjdmMjQtYjkzNS00ZjRiLTg0OTMtNzNiOGYxMGYwZGFiOnNlY3JldDI=')
       .set('Content-Type', 'application/x-www-form-urlencoded')
       .expect(200)
-      .then(res => expect(Object.keys(res.body).every(k => Object.keys(token).includes(k))).toBe(true));
+      .then(res => {
+        assert.ok(Object.keys(res.body).every(k => Object.keys(token).includes(k)));
+        done();
+      });
   });
 
-  it('/auth/authorize auth flow start', () => {
+  it('/auth/authorize auth flow start', (done) => {
     return request(app.getHttpServer())
       .post('/oauth/authorize')
       .query({
         "client_id":"14e27f24-b935-4f4b-8493-73b8f10f0dab",
         "redirect_uri":"https://google.com",
         "response_type":"code",
-        "scope":"user.read"
+        "scope":"user.read",
       })
       .expect(302)
       .then(res => {
@@ -55,13 +59,14 @@ describe('AppController (e2e)', () => {
           redirectUri: 'https://google.com',
           scope: 'true'
         }
-        expect(Object.keys(returnedParams).every(k => Object.keys(authResponse).includes(k))).toBe(true);
+        assert.ok(Object.keys(authResponse).every(k => Object.keys(returnedParams).includes(k)));
         // set this code to use in following test
         authCode = returnedParams.authorizationCode;
+        done();
       });
   });
 
-  it('/auth/token', () => {
+  it('/auth/token', (done) => {
     return request(app.getHttpServer())
       .post('/oauth/token')
       .send({
@@ -73,6 +78,26 @@ describe('AppController (e2e)', () => {
       })
       .set('Content-Type', 'application/x-www-form-urlencoded')
       .expect(200)
-      .then(res => expect(Object.keys(res.body).every(k => Object.keys(token).includes(k))).toBe(true));
+      .then(res => {
+        assert.ok(Object.keys(res.body).every(k => Object.keys(token).includes(k)));
+        done();
+      });
+  });
+
+  it('/auth/token password', (done) => {
+    return request(app.getHttpServer())
+      .post('/oauth/token')
+      .send({
+        "grant_type":"password",
+        "username":"joebloggs",
+        "password":"foo"
+      })
+      .set('Authorization', 'Basic YjkyMGJiY2EtYWJhNS00MWEwLThmOTYtMThjOGU2YzhmYjM5OnNlY3JldDE=')
+      .set('Content-Type', 'application/x-www-form-urlencoded')
+      .expect(200)
+      .then(res => {
+        assert.ok(Object.keys(res.body).every(k => Object.keys(token).includes(k)));
+        done();
+      });
   });
 });
