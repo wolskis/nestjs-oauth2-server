@@ -4,10 +4,12 @@ import { ModelGenerator } from "./model";
 
 const model = new ModelGenerator().init()
 
+const accessTokenLifetime = parseInt(process.env.TOKEN_TTL) || 3600;
+
 const oauth2Server = new OAuth2Server({
     model,
-    accessTokenLifetime: 60 * 60,
-	allowBearerTokensInQueryString: true
+    accessTokenLifetime,
+	allowBearerTokensInQueryString: false
 });
 
 @Controller('oauth')
@@ -22,8 +24,12 @@ export class OauthController {
         const request = new OAuth2Server.Request(req);
         const response = new OAuth2Server.Response(res);
         return oauth2Server.token(request, response)
-            .then((token: any) => {
-                res.status(200).json(token);
+            .then((token: OAuth2Server.Token) => {
+                res.status(200).json({
+                    access_token: token.accessToken,
+                    ...(token.refreshToken && {refresh_token: token.refreshToken}),
+                    expiry: accessTokenLifetime
+                });
             }).catch((err: any) => {
                 console.log(err);
                 res.status(err.code || 500).json(err);

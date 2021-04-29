@@ -7,6 +7,7 @@ import { TokensService } from "../services/tokens/tokens.service";
 import { UsersService } from "../services/users/users.service";
 const AccessDeniedError = require('oauth2-server/lib/errors/access-denied-error');
 const InvalidTokenError = require('oauth2-server/lib/errors/invalid-token-error');
+const jwt = require('jsonwebtoken');
 
 interface ModelGeneratorType {
     init(): ServerOptions["model"]
@@ -23,6 +24,17 @@ export class ModelGenerator implements ModelGeneratorType {
 
     public init() {
         return {
+            generateAccessToken: async(client: Client, user: User, scope: string): Promise<string> => {
+                console.log('generateAccessToken');
+                const exp = Math.floor(Date.now() / 1000) + (parseInt(process.env.TOKEN_TTL) || 3600);
+                return jwt.sign({
+                    iss: process.env.ISSUER,
+                    sub: user.id,
+                    aud: client.id, 
+                    scope,
+                    exp
+                }, process.env.JWT_SECRET)
+            },
             getAccessToken: async(token: string): Promise<Token> => {
                 console.log('getAccessToken');
                 const retrievedToken = await this.tokensService.getTokenByToken(token);
@@ -107,6 +119,7 @@ export class ModelGenerator implements ModelGeneratorType {
             },
             revokeToken: (token: Token): Promise<boolean> => {
                 console.log('revokeToken');
+                console.log(token);
                 return this.tokensService.deleteTokenByToken(token.accesstoken);
             },
             saveAuthorizationCode: async (code: AuthorizationCode, client: Client, user: User): Promise<AuthorizationCode> => {

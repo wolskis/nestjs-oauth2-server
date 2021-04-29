@@ -39,4 +39,10 @@ export const token = {
     user
 }
 
+export const tokenResponse = {
+    access_token: '0adab8058775373c32d84a4a7faceb6bca104a0e',
+    refresh_token: '2dcd1cc8e88468ee7f55d739be2aba4aaf4f735e',
+    expiry: 100,
+}
+
 export default { authcode, client, user, dbAuthCode, token }

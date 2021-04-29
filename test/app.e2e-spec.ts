@@ -4,7 +4,7 @@ const assert = require('assert');
 const queryString = require('query-string');
 import * as request from 'supertest';
 import { AppModule } from './../src/app.module';
-import { token } from '../src/mocks'
+import { tokenResponse } from '../src/mocks'
 
 // TODO: Come up with a better method to test other than shallow object equivalence
 
@@ -32,7 +32,7 @@ describe('AppController (e2e)', () => {
       .set('Content-Type', 'application/x-www-form-urlencoded')
       .expect(200)
       .then(res => {
-        assert.ok(Object.keys(res.body).every(k => Object.keys(token).includes(k)));
+        assert.ok(Object.keys(res.body).every(k => Object.keys(tokenResponse).includes(k)));
         done();
       });
   });
@@ -75,15 +75,17 @@ describe('AppController (e2e)', () => {
       .set('Content-Type', 'application/x-www-form-urlencoded')
       .expect(200)
       .then(res => {
-        assert.ok(Object.keys(res.body).every(k => Object.keys(token).includes(k)));
+        assert.ok(Object.keys(res.body).every(k => Object.keys(tokenResponse).includes(k)));
         // set this token to use in following test
-        refreshToken = res.body.refreshToken;
-        accessToken1 = res.body.accessToken;
+        refreshToken = res.body.refresh_token;
+        accessToken1 = res.body.access_token;
         done();
       });
   });
 
-  it('/auth/token', (done) => {
+  it('/auth/token', async (done) => {
+    // we add an arbitrary delay here because these two tests actually execute fast enough that the issued token is identical
+    await new Promise(resolve => setTimeout(resolve, 1000));
     return request(app.getHttpServer())
       .post('/oauth/token')
       .send({
@@ -94,8 +96,8 @@ describe('AppController (e2e)', () => {
       .set('Content-Type', 'application/x-www-form-urlencoded')
       .expect(200)
       .then(res => {
-        assert.ok(Object.keys(res.body).every(k => Object.keys(token).includes(k)));
-        accessToken2 = res.body.accessToken;
+        assert.ok(Object.keys(res.body).every(k => Object.keys(tokenResponse).includes(k)));
+        accessToken2 = res.body.access_token;
         done();
       });
   });
@@ -112,7 +114,7 @@ describe('AppController (e2e)', () => {
       .set('Content-Type', 'application/x-www-form-urlencoded')
       .expect(200)
       .then(res => {
-        assert.ok(Object.keys(res.body).every(k => Object.keys(token).includes(k)));
+        assert.ok(Object.keys(res.body).every(k => Object.keys(tokenResponse).includes(k)));
         done();
       });
   });
@@ -137,10 +139,10 @@ describe('AppController (e2e)', () => {
       .expect(200)
   });
 
-  // it('Authenticates secured endpoints with scope verification', () => {
-  //   return request(app.getHttpServer())
-  //     .post('/api')
-  //     .set('Authorization', `Bearer ${accessToken2}`)
-  //     .expect(403)
-  // });
+  it('Authenticates secured endpoints with scope verification', () => {
+    return request(app.getHttpServer())
+      .post('/api')
+      .set('Authorization', `Bearer ${accessToken2}`)
+      .expect(403)
+  });
 });
