@@ -50,14 +50,14 @@ describe('AppController (e2e)', () => {
       .then(res => {
         const returnedParams = queryString.parseUrl(res.header.location).query;
         const authResponse =  {
-          authorizationCode: 'b8f2befbe5158aab8defee8c100a8eb2a9bd6b5b',
+          code: 'b8f2befbe5158aab8defee8c100a8eb2a9bd6b5b',
           expiresAt: '1619080558000',
           redirectUri: 'https://google.com',
           scope: 'true'
         }
         assert.ok(Object.keys(authResponse).every(k => Object.keys(returnedParams).includes(k)));
         // set this code to use in following test
-        authCode = returnedParams.authorizationCode;
+        authCode = returnedParams.code;
         done();
       });
   });

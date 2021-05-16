@@ -119,7 +119,6 @@ export class ModelGenerator implements ModelGeneratorType {
             },
             revokeToken: (token: Token): Promise<boolean> => {
                 console.log('revokeToken');
-                console.log(token);
                 return this.tokensService.deleteTokenByToken(token.accesstoken);
             },
             saveAuthorizationCode: async (code: AuthorizationCode, client: Client, user: User): Promise<AuthorizationCode> => {
