@@ -11,6 +11,11 @@ An exercise in developing a generic and compliant javascript-based OAuth 2.0 Ser
 $ npm install
 ```
 
+**Copy .env.example into .env and replace variables**
+```bash
+$ cp .env.example .env
+```
+
 **Bootstrap database**
 From the project root directory, launch postgres container with docker
 ```docker run -p 5432:5432 --name oauth-server -e POSTGRES_PASSWORD=password -e POSTGRES_DB=oauth -d postgres```

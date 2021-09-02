@@ -125,10 +125,10 @@ export class OauthController {
             });
             return
         }
-
+        
         // check scope
         if (!utils.validScope(query.scope)) {
-            res.status(400).json({
+            res.status(400).json({    
                 message: 'Invalid scope, must be alphanumeric, dash, underscore or dot.'
             });
             return

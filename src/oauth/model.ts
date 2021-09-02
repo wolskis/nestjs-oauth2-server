@@ -37,12 +37,26 @@ export class ModelGenerator implements ModelGeneratorType {
             },
             getAccessToken: async(token: string): Promise<Token> => {
                 console.log('getAccessToken');
+                // throw error if token cannot be verified, inc secret
+                try {
+                    jwt.verify(token, process.env.JWT_SECRET);
+                } catch(err) {
+                    const e = new InvalidTokenError();
+                    e.message = err.message;
+                    return Promise.reject(e);
+                }
+                
                 const retrievedToken = await this.tokensService.getTokenByToken(token);
+                
+                // throw error if token cannot be retrieved
+                // there is a redundancy here, as the token is verified against the secret above
+                // but will also fail here due to DB string matching
                 if (!retrievedToken) {
                     const err = new InvalidTokenError();
-                    err.message = 'Invalid access token';
+                    err.message = 'Invalid or unknown access token';
                     return Promise.reject(err);
                 }
+
                 const client = await this.clientService.getClientById(retrievedToken.clientid);
                 const user = await this.usersService.getUserById(retrievedToken.userid);
                 // use promise.all to optimise this?
@@ -170,11 +184,11 @@ export class ModelGenerator implements ModelGeneratorType {
                     s = client.scopes;
                 }
 
-                // logic to verify scope goes here
                 return Promise.resolve(s);
             },
             verifyScope: (token: Token, scope: string): Promise<boolean> => {
                 console.log('verifyScope');
+                // where does this get used?
                 // logic to verify scope goes here
                 return Promise.resolve(true)
             }

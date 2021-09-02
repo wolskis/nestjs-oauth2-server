@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 const assert = require('assert');
 const queryString = require('query-string');
+const jwt = require('jsonwebtoken');
 import * as request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { tokenResponse } from '../src/mocks'
@@ -144,5 +145,15 @@ describe('AppController (e2e)', () => {
       .post('/api')
       .set('Authorization', `Bearer ${accessToken2}`)
       .expect(403)
+  });
+
+  it('Authenticates secured endpoints with secret verification', () => {
+    const tokenParts = accessToken2.split('.');
+    tokenParts[2] = Buffer.from('badsecretstring', 'binary').toString('base64');
+    const tokenWithFalseSecret = tokenParts.join('.');
+    return request(app.getHttpServer())
+      .post('/api')
+      .set('Authorization', `Bearer ${tokenWithFalseSecret}`)
+      .expect(401)
   });
 });

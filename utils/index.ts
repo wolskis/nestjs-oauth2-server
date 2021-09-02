@@ -9,7 +9,7 @@ const validURL = function (str) {
   }
 
 const validScope = function (str) {
-  var pattern = new RegExp('^[a-zA-Z\d\\-_.+\s]+$');
+  var pattern = new RegExp('^[a-zA-Z\d\\-_. \s]+$');
   return !!pattern.test(str);
 }
 
