@@ -64,8 +64,8 @@ CREATE TABLE authcodes
 
 INSERT INTO users (username, password, clients)
 VALUES
-  ('joebloggs', 'foo', ARRAY['b920bbca-aba5-41a0-8f96-18c8e6c8fb39']::uuid[]),
-  ('foobar', 'foo', ARRAY['14e27f24-b935-4f4b-8493-73b8f10f0dab']::uuid[])
+  ('joebloggs', crypt('foo', gen_salt('md5')), ARRAY['b920bbca-aba5-41a0-8f96-18c8e6c8fb39']::uuid[]),
+  ('foobar', crypt('foo', gen_salt('md5')), ARRAY['14e27f24-b935-4f4b-8493-73b8f10f0dab']::uuid[])
 RETURNING *;
 
 INSERT INTO clients (clientId, clientSecret, grants, redirectUris, scopes)

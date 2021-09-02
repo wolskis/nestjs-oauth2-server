@@ -18,7 +18,7 @@ export class UsersService {
     }
 
     public async getUserByCredentials(username: String, password: String): Promise<User> {
-        const { rows } = await this.databaseService.query(`SELECT id, username FROM users WHERE username = '${username}' AND password = '${password}'`);
+        const { rows } = await this.databaseService.query(`SELECT id, username FROM users WHERE username = '${username}' AND password = crypt('${password}', password)`);
         if (rows.length === 1){
             return rows[0] as User;
         }

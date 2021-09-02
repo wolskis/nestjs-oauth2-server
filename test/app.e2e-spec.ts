@@ -125,7 +125,7 @@ describe('AppController (e2e)', () => {
       .expect(401)
   });
 
-  it('Ensures that tokens are invalided if a new one is issued', () => {
+  it('Ensures that tokens are invalidated if a new one is issued', () => {
     return request(app.getHttpServer())
       .get('/api')
       .set('Authorization', `Bearer ${accessToken1}`)
