@@ -170,6 +170,9 @@ export class OauthController {
                 });
             }
             result.expiresAt = Date.parse(result.expiresAt);
+            if (query.state) {
+                result.state = query.state;
+            }
             const queryString = Object.keys(result).map(key => {
                 if (key === 'authorizationCode') {
                     return 'code=' + result[key];

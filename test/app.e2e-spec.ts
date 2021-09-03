@@ -46,6 +46,7 @@ describe('AppController (e2e)', () => {
         "redirect_uri":"https://google.com",
         "response_type":"code",
         "scope":"user.read",
+        "state": "123"
       })
       .expect(302)
       .then(res => {
@@ -54,7 +55,8 @@ describe('AppController (e2e)', () => {
           code: 'b8f2befbe5158aab8defee8c100a8eb2a9bd6b5b',
           expiresAt: '1619080558000',
           redirectUri: 'https://google.com',
-          scope: 'true'
+          scope: 'true',
+          state: "123"
         }
         assert.ok(Object.keys(authResponse).every(k => Object.keys(returnedParams).includes(k)));
         // set this code to use in following test
