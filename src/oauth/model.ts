@@ -45,7 +45,6 @@ export class ModelGenerator implements ModelGeneratorType {
                     e.message = err.message;
                     return Promise.reject(e);
                 }
-                
                 const retrievedToken = await this.tokensService.getTokenByToken(token);
                 
                 // throw error if token cannot be retrieved
