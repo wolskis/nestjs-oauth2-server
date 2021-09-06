@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>App</title>
+  </head>
+  <body>
+    <form action="/oauth/authorize" method="post">
+      <input type="hidden" id="client_id" name="client_id" value="{{client_id}}">
+      <input type="hidden" id="redirect_uri" name="redirect_uri" value="{{redirect_uri}}">
+      <input type="hidden" id="response_type" name="response_type" value="{{response_type}}">
+      <input type="hidden" id="scope" name="scope" value="{{scope}}">
+      You are giving away the following scopes: {{scope}}
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" placeholder="Enter your username ..."/>
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" placeholder="Enter your password ..."/>
+      <button type="submit">Submit</button>
+    </form>
+  </body>
+</html>

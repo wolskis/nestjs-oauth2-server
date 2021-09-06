@@ -1,4 +1,6 @@
-import { Controller, Get, Post, Query, Redirect, Req, Res } from '@nestjs/common';
+import { Controller, Get, Post, Query, Redirect, Req, Res, Render } from '@nestjs/common';
+import { DatabaseService } from "../services/database/database.service";
+import { UsersService } from "../services/users/users.service";
 import * as OAuth2Server from "oauth2-server";
 import { validate as uuidValidate } from 'uuid';
 import utils from "../../utils"
@@ -16,6 +18,10 @@ const oauth2Server = new OAuth2Server({
 
 @Controller('oauth')
 export class OauthController {
+
+    private databaseInstance = new DatabaseService;
+    private usersService = new UsersService(this.databaseInstance);
+
     @Get('token')
     get(): string {
         return 'this would be a front end login page to kickstart auth process usually';
@@ -97,13 +103,31 @@ export class OauthController {
             });
 
     }
+
+    @Get('authorize')
+    @Render('index')
+    root(@Query() query) {
+        if (!query || !query.client_id || !query.redirect_uri || !query.scope || !query.response_type) {
+            return { message: 'Missing required parameter [client_id, redirect_uri, scope, response_type]' }
+        }
+        return query;
+    }
  
     @Post('authorize')
-    async redirect(@Req() req, @Query() query, @Res() res, ) {
+    async redirect(@Req() req, @Res() res) {
         const request = new OAuth2Server.Request(req);
         const response = new OAuth2Server.Response(res);
-        // should include a csrf token
-        if (!query || !query.client_id || !query.redirect_uri || !query.scope || !query.response_type) {
+
+        const query = req.body;
+
+        if (!query || !query.username || !query.password) {
+            res.status(400).json({
+                message: 'Invalid user credentials'
+            });
+            return
+        }
+
+        if (!query.client_id || !query.redirect_uri || !query.scope || !query.response_type) {
             res.status(400).json({
                 message: 'Missing required parameter [client_id, redirect_uri, scope, response_type]'
             });
@@ -150,14 +174,19 @@ export class OauthController {
             return
         }
 
+        // validate user
+        const user = await this.usersService.getUserByCredentials(query.username, query.password);
+        if (!user) {
+            res.status(400).json({
+                message: "Invalid user credentials"
+            });
+            return
+        }
+
         await oauth2Server.authorize(request, response, {
             allowEmptyState: true,
             authenticateHandler: {
-                handle: (req) => {
-                    // console.log(req.body);
-                    // Whatever you need to do to authorize / retrieve your user from post data here
-                    return {id: 1};
-                }
+                handle: () => user
             }
         }, (err?: any, result?: any) => {
             if (err) {
