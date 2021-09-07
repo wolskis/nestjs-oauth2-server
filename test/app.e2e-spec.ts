@@ -1,16 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 const assert = require('assert');
 const queryString = require('query-string');
+import { join } from 'path';
 const jwt = require('jsonwebtoken');
 import * as request from 'supertest';
+import { parse as parseHTML } from 'node-html-parser';
 import { AppModule } from './../src/app.module';
 import { tokenResponse } from '../src/mocks'
 
-// TODO: Come up with a better method to test other than shallow object equivalence
-
 describe('AppController (e2e)', () => {
-  let app: INestApplication;
+  let app: NestExpressApplication;
   let authCode: string;
   let refreshToken: string;
   let accessToken1: string;
@@ -22,11 +23,19 @@ describe('AppController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    await app.init();
+    app.useStaticAssets(join(__dirname, '../src', 'public'));
+    app.setBaseViewsDir(join(__dirname, '../src', 'client'));
+    app.setViewEngine('hbs');
+
+    await app.listen(parseInt(process.env.PORT, 10) || 3000);
+  });
+
+  afterEach(() => {
+    return app && app.close();
   });
 
   it('/auth/token client_credentials', (done) => {
-    return request(app.getHttpServer())
+    request(app.getHttpServer())
       .post('/oauth/token')
       .send({"grant_type": "client_credentials"})
       .set('Authorization', 'Basic MTRlMjdmMjQtYjkzNS00ZjRiLTg0OTMtNzNiOGYxMGYwZGFiOnNlY3JldDI=')
@@ -38,15 +47,38 @@ describe('AppController (e2e)', () => {
       });
   });
 
-  it('/auth/authorize auth flow start', (done) => {
-    return request(app.getHttpServer())
-      .post('/oauth/authorize')
+  it('/auth/authorize auth flow start GET', (done) => {
+    request(app.getHttpServer())
+      .get('/oauth/authorize')
       .query({
         "client_id":"14e27f24-b935-4f4b-8493-73b8f10f0dab",
         "redirect_uri":"https://google.com",
         "response_type":"code",
         "scope":"user.read",
         "state": "123"
+      })
+      .expect(200)
+      .then(res => {
+        // assert that response is a html page
+        assert.equal(res.headers["content-type"], 'text/html; charset=utf-8');
+        // assert hidden fields are present in html
+        const html = parseHTML(res.text);
+        assert.equal(html.querySelector('#client_id').getAttribute('value'), "14e27f24-b935-4f4b-8493-73b8f10f0dab");
+        done();
+      });
+  });
+
+  it('/auth/authorize auth flow start POST', (done) => {
+    request(app.getHttpServer())
+      .post('/oauth/authorize')
+      .send({
+        "client_id":"14e27f24-b935-4f4b-8493-73b8f10f0dab",
+        "redirect_uri":"https://google.com",
+        "response_type":"code",
+        "scope":"user.read",
+        "state": "123",
+        "username": "foobar",
+        "password": "foo"
       })
       .expect(302)
       .then(res => {
@@ -65,8 +97,21 @@ describe('AppController (e2e)', () => {
       });
   });
 
+  it('/auth/authorize auth flow start POST rejected without user credentials', () => {
+    request(app.getHttpServer())
+      .post('/oauth/authorize')
+      .send({
+        "client_id":"14e27f24-b935-4f4b-8493-73b8f10f0dab",
+        "redirect_uri":"https://google.com",
+        "response_type":"code",
+        "scope":"user.read",
+        "state": "123"
+      })
+      .expect(400);
+  });
+
   it('/auth/token', (done) => {
-    return request(app.getHttpServer())
+    request(app.getHttpServer())
       .post('/oauth/token')
       .send({
         "grant_type":"authorization_code",
@@ -89,7 +134,7 @@ describe('AppController (e2e)', () => {
   it('/auth/token', async (done) => {
     // we add an arbitrary delay here because these two tests actually execute fast enough that the issued token is identical
     await new Promise(resolve => setTimeout(resolve, 1000));
-    return request(app.getHttpServer())
+    request(app.getHttpServer())
       .post('/oauth/token')
       .send({
         "grant_type":"refresh_token",
@@ -106,7 +151,7 @@ describe('AppController (e2e)', () => {
   });
 
   it('/auth/token password', (done) => {
-    return request(app.getHttpServer())
+    request(app.getHttpServer())
       .post('/oauth/token')
       .send({
         "grant_type":"password",
@@ -123,27 +168,27 @@ describe('AppController (e2e)', () => {
   });
 
   it('Protects secured endpoints', () => {
-    return request(app.getHttpServer())
+    request(app.getHttpServer())
       .get('/api')
       .expect(401)
   });
 
   it('Ensures that tokens are invalidated if a new one is issued', () => {
-    return request(app.getHttpServer())
+    request(app.getHttpServer())
       .get('/api')
       .set('Authorization', `Bearer ${accessToken1}`)
       .expect(401)
   });
 
   it('Authenticates secured endpoints', () => {
-    return request(app.getHttpServer())
+    request(app.getHttpServer())
       .get('/api')
       .set('Authorization', `Bearer ${accessToken2}`)
       .expect(200)
   });
 
   it('Authenticates secured endpoints with scope verification', () => {
-    return request(app.getHttpServer())
+    request(app.getHttpServer())
       .post('/api')
       .set('Authorization', `Bearer ${accessToken2}`)
       .expect(403)
@@ -153,7 +198,7 @@ describe('AppController (e2e)', () => {
     const tokenParts = accessToken2.split('.');
     tokenParts[2] = Buffer.from('badsecretstring', 'binary').toString('base64');
     const tokenWithFalseSecret = tokenParts.join('.');
-    return request(app.getHttpServer())
+    request(app.getHttpServer())
       .post('/api')
       .set('Authorization', `Bearer ${tokenWithFalseSecret}`)
       .expect(401)

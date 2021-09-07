@@ -24,7 +24,7 @@ export class ClientsService {
     }
     
     public async getClientById(clientId: String): Promise<Client> {
-        const { rows } = await this.databaseService.query(`SELECT id, clientid, grants, scopes, redirecturis FROM clients WHERE clientId = '${clientId}'`);
+        const { rows } = await this.databaseService.query(`SELECT id, name, clientid, grants, scopes, redirecturis FROM clients WHERE clientId = '${clientId}'`);
         if (rows.length === 1){
             return this.cleanClient(rows[0]) as Client;
         }
@@ -32,7 +32,7 @@ export class ClientsService {
     }
 
     public async getClientByIdAndSecret(clientId: String, clientSecret: String): Promise<Client> {
-        const { rows } = await this.databaseService.query(`SELECT id, clientid, grants, scopes, redirecturis FROM clients WHERE clientId = '${clientId}' AND clientSecret = '${clientSecret}'`);
+        const { rows } = await this.databaseService.query(`SELECT id, name, clientid, grants, scopes, redirecturis FROM clients WHERE clientId = '${clientId}' AND clientSecret = '${clientSecret}'`);
         if (rows.length === 1){
             return this.cleanClient(rows[0]) as Client;
         }
@@ -40,7 +40,7 @@ export class ClientsService {
     }
 
     public async validateClient(clientId: String, redirectUri: string, scopes: Array<String>): Promise<Client> {
-        const { rows } = await this.databaseService.query(`SELECT id, clientid, grants, scopes, redirecturis FROM clients WHERE clientId = '${clientId}'`);
+        const { rows } = await this.databaseService.query(`SELECT id, name, clientid, grants, scopes, redirecturis FROM clients WHERE clientId = '${clientId}'`);
         if (rows.length === 1){
             const client = this.cleanClient(rows[0]) as Client;
             if(client.redirectUris.length <= 0 || !client.redirectUris.includes(redirectUri) || !scopes.every(scope => client.scopes?.includes(scope))) {

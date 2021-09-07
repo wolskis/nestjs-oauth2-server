@@ -12,6 +12,7 @@ CREATE TYPE granttypes AS ENUM ('authorization_code','password','client_credenti
 CREATE TABLE clients 
 (
   id              SERIAL,
+  name            TEXT NOT NULL,
   clientId        uuid,
   clientSecret    VARCHAR(255),
   grants          granttypes[],
@@ -68,8 +69,8 @@ VALUES
   ('foobar', crypt('foo', gen_salt('md5')), ARRAY['14e27f24-b935-4f4b-8493-73b8f10f0dab']::uuid[])
 RETURNING *;
 
-INSERT INTO clients (clientId, clientSecret, grants, redirectUris, scopes)
+INSERT INTO clients (name, clientId, clientSecret, grants, redirectUris, scopes)
 VALUES
-  ('b920bbca-aba5-41a0-8f96-18c8e6c8fb39','secret1', ARRAY['password']::granttypes[], null, ARRAY['user.read']),
-  ('14e27f24-b935-4f4b-8493-73b8f10f0dab','secret2', ARRAY['client_credentials', 'authorization_code', 'refresh_token']::granttypes[], ARRAY['https://google.com'], ARRAY['user.read', 'user.write'])
+  ('Applify Dev','b920bbca-aba5-41a0-8f96-18c8e6c8fb39','secret1', ARRAY['password']::granttypes[], null, ARRAY['user.read']),
+  ('Applify','14e27f24-b935-4f4b-8493-73b8f10f0dab','secret2', ARRAY['client_credentials', 'authorization_code', 'refresh_token']::granttypes[], ARRAY['https://google.com'], ARRAY['user.read', 'user.write'])
 RETURNING *;

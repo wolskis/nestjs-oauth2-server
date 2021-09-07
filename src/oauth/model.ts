@@ -157,11 +157,11 @@ export class ModelGenerator implements ModelGeneratorType {
                 }
                 return Promise.resolve(token);
             },
-            validateClient: async (clientId:string, redirectUri:string, scopes: Array<string>): Promise<boolean> => {
+            validateClient: async (clientId:string, redirectUri:string, scopes: Array<string>): Promise<Client> => {
                 console.log('validateClient');
                 // there's a bug in oauth2-server where scopes is returned here as an array of 1 string
                 const client = await this.clientService.validateClient(clientId, redirectUri, scopes[0].split(' '));
-                return Promise.resolve(!!client);
+                return Promise.resolve(client);
             },
             validateScope: async (user:User, client: Client, scope: Array<string>|string): Promise<Array<string>> => {
                 console.log('validateScope');

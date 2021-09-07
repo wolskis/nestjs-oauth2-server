@@ -1,6 +1,4 @@
 import { Controller, Get, Post, Query, Redirect, Req, Res, Render } from '@nestjs/common';
-import { DatabaseService } from "../services/database/database.service";
-import { UsersService } from "../services/users/users.service";
 import * as OAuth2Server from "oauth2-server";
 import { validate as uuidValidate } from 'uuid';
 import utils from "../../utils"
@@ -18,9 +16,6 @@ const oauth2Server = new OAuth2Server({
 
 @Controller('oauth')
 export class OauthController {
-
-    private databaseInstance = new DatabaseService;
-    private usersService = new UsersService(this.databaseInstance);
 
     @Get('token')
     get(): string {
@@ -106,10 +101,22 @@ export class OauthController {
 
     @Get('authorize')
     @Render('index')
-    root(@Query() query) {
+    async root(@Query() query, @Res() res) {
+
+        // this method would usually resolve to a 302 address to a form interface
+        // we're rendering and serving our own here instead
+        console.log(query);
         if (!query || !query.client_id || !query.redirect_uri || !query.scope || !query.response_type) {
             return { message: 'Missing required parameter [client_id, redirect_uri, scope, response_type]' }
         }
+        const client = await model.validateClient(query.client_id, query.redirect_uri, query.scope.split('+'));
+        if (!client) {
+            res.status(400).json({
+                message: "Invalid client credentials"
+            });
+            return
+        }
+        query.client_name = client.name;
         return query;
     }
  
@@ -119,7 +126,7 @@ export class OauthController {
         const response = new OAuth2Server.Response(res);
 
         const query = req.body;
-
+        console.log(query);
         if (!query || !query.username || !query.password) {
             res.status(400).json({
                 message: 'Invalid user credentials'
@@ -175,14 +182,16 @@ export class OauthController {
         }
 
         // validate user
-        const user = await this.usersService.getUserByCredentials(query.username, query.password);
-        if (!user) {
+        const user = await model.getUser(query.username, query.password);
+        if (!user || !user?.clients?.includes(query.client_id)) {
             res.status(400).json({
                 message: "Invalid user credentials"
             });
             return
         }
 
+        // something in here needs to validate client/user link
+        console.log(user);
         await oauth2Server.authorize(request, response, {
             allowEmptyState: true,
             authenticateHandler: {

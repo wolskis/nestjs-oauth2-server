@@ -1,6 +1,48 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <style>
+      body {
+        display: block;
+        font-family: sans-serif;
+        font-size: 0.9em;
+        font-weight: 400;
+      }
+      form { padding: 1em }
+      input, label { display: block }
+      label {
+        font-size:1.2em;
+        font-weight:700;
+      }
+      input { 
+        padding: 0.35em 0.5em;
+        margin-bottom: 1em;
+        border-radius:4px;
+        border-color:black;
+        border-width:2px;
+      }
+      input:focus {
+        border-color:rgba(0,0,0,.85)
+      }
+      button {
+        padding: .5em 1em;
+        background-color: black;
+        border: none;
+        border-radius: 4px;
+        color: white;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color:rgba(0,0,0,.85)
+      }
+      .warning {
+        padding: 1em;
+        border: 1px solid black;
+        border-radius: 4px;
+        margin-bottom: 1em;
+      }
+    </style>
     <meta charset="utf-8" />
     <title>App</title>
   </head>
@@ -10,12 +52,12 @@
       <input type="hidden" id="redirect_uri" name="redirect_uri" value="{{redirect_uri}}">
       <input type="hidden" id="response_type" name="response_type" value="{{response_type}}">
       <input type="hidden" id="scope" name="scope" value="{{scope}}">
-      You are giving away the following scopes: {{scope}}
+      <div class="warning">Enter your credentials to give {{client_name}} the following permissions: {{scope}}</div>
       <label for="username">Username</label>
-      <input type="text" id="username" name="username" placeholder="Enter your username ..."/>
+      <input type="text" id="username" name="username" placeholder="Enter your username ..." tabindex="1"/>
       <label for="password">Password</label>
-      <input type="password" id="password" name="password" placeholder="Enter your password ..."/>
-      <button type="submit">Submit</button>
+      <input type="password" id="password" name="password" placeholder="Enter your password ..." tabindex="2"/>
+      <button type="submit" tabindex="3">Submit</button>
     </form>
   </body>
 </html>
